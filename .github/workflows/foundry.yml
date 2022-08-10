@@ -12,6 +12,7 @@ jobs:
         steps:
             - uses: actions/checkout@v3
               with:
+                  ssh-key: ${{ secrets.OMNIA_NFT_REPO_SSH_PRIVATE_KEY }}
                   submodules: recursive
 
             - name: Install Foundry
