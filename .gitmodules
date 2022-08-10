@@ -7,3 +7,6 @@
 [submodule "lib/openzeppelin-contracts"]
 	path = lib/openzeppelin-contracts
 	url = https://github.com/Openzeppelin/openzeppelin-contracts
+[submodule "lib/omnia-nft"]
+	path = lib/omnia-nft
+	url = git@github.com:Omnia-DeFi/nft-contracts-for-a-real-world-asset.git
