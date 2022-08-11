@@ -39,9 +39,47 @@ contract MarketplaceTest is Test {
         assetNft = new AssetNft(owner);
         assetPrice = 650000 * marketplace.USD_PRICE_DECIMAL();
     }
+
+    /**
+     * @notice Seller list their asset for sale with a floor price in USD.
+     * @dev In the frontend the price will have to be multiplied by 10**2 as blockchains
+     *      don't deal with decimals.
+     */
+    function testSellerListAssetForSale() external {
+        vm.startPrank(owner);
+        assetNft.safeMint(owner, 0, "hash");
+
+        marketplace.listAssetForSale(assetNft, 0, assetPrice);
+
+        // Verify listing price of the asset
+        assertEq(marketplace.floorPriceOf(assetNft, 0), assetPrice);
     }
 
-    /// @notice List an asset with a floor price.
+    function testSellerListAssetForSaleVerifyEmittanceofEvent() external {
+        vm.startPrank(owner);
+        assetNft.safeMint(owner, 0, "hash");
 
-    /// @notice The solicitor attach multiple messages to sign documents.
+        // Verify emittance of AssetListedForSale
+        vm.expectEmit(true, true, true, true);
+        emit AssetListedForSale(assetNft, 0, assetPrice);
+
+        marketplace.listAssetForSale(assetNft, 0, assetPrice);
+    }
+
+    function testSellerListAssetForSaleFailsOnNotOwner() public {
+        vm.prank(owner);
+        assetNft.safeMint(owner, 0, "hash");
+
+        vm.prank(alice);
+        vm.expectRevert("NOT_OWNER");
+        marketplace.listAssetForSale(assetNft, 0, assetPrice);
+    }
+
+    function testSellerListAssetForSaleFailsOnZeroFloorPrice() public {
+        vm.startPrank(owner);
+        assetNft.safeMint(owner, 0, "hash");
+
+        vm.expectRevert("ZERO_FLOOR_PRICE");
+        marketplace.listAssetForSale(assetNft, 0, 0);
+    }
 }
