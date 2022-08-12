@@ -47,7 +47,8 @@ contract Marketplace {
     /**
      * @dev List an asset for sale with a floor price in USD.
      *
-     * @param assetNft The asset to list for sale.
+     * @param assetNft The asset contract from which the asset originates.
+     * @param assetId The asset ID of the exact asset to list for sale.
      * @param floorPrice The floor price in USD.
      *
      * Requirements:
