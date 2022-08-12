@@ -15,9 +15,9 @@ contract Marketplace {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
     event AssetListedForSale(
-        AssetNft _assetNft,
-        uint256 _assetId,
-        uint256 _floorPrice
+        AssetNft assetNft,
+        uint256 assetId,
+        uint256 floorPrice
     );
 
     /*//////////////////////////////////////////////////////////////
@@ -35,19 +35,19 @@ contract Marketplace {
     /**
      * @dev List an asset for sale with a floor price in USD.
      *
-     * @param _assetNft The asset to list for sale.
-     * @param _floorPrice The floor price in USD.
+     * @param assetNft The asset to list for sale.
+     * @param floorPrice The floor price in USD.
      */
     function listAssetForSale(
-        AssetNft _assetNft,
-        uint256 _assetId,
-        uint256 _floorPrice
+        AssetNft assetNft,
+        uint256 assetId,
+        uint256 floorPrice
     ) public {
-        require(_assetNft.ownerOf(_assetId) == msg.sender, "NOT_OWNER");
-        require(_floorPrice > 0, "ZERO_FLOOR_PRICE");
+        require(assetNft.ownerOf(assetId) == msg.sender, "NOT_OWNER");
+        require(floorPrice > 0, "ZERO_FLOOR_PRICE");
 
-        floorPriceOf[_assetNft][_assetId] = _floorPrice;
+        floorPriceOf[assetNft][assetId] = floorPrice;
 
-        emit AssetListedForSale(_assetNft, _assetId, _floorPrice);
+        emit AssetListedForSale(assetNft, assetId, floorPrice);
     }
 }

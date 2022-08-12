@@ -11,9 +11,9 @@ contract MarketplaceTest is Test {
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
     event AssetListedForSale(
-        AssetNft _assetNft,
-        uint256 _assetId,
-        uint256 _floorPrice
+        AssetNft assetNft,
+        uint256 assetId,
+        uint256 floorPrice
     );
 
     /*//////////////////////////////////////////////////////////////
