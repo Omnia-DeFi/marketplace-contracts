@@ -40,6 +40,9 @@ contract MarketplaceTest is Test {
         assetPrice = 650000 * marketplace.USD_PRICE_DECIMAL();
     }
 
+    /*//////////////////////////////////////////////////////////////
+                            LIST ASSET FOR SALE
+    //////////////////////////////////////////////////////////////*/
     /**
      * @notice Seller list their asset for sale with a floor price in USD.
      * @dev In the frontend the price will have to be multiplied by 10**2 as blockchains
@@ -82,4 +85,15 @@ contract MarketplaceTest is Test {
         vm.expectRevert("ZERO_FLOOR_PRICE");
         marketplace.listAssetForSale(assetNft, 0, 0);
     }
+
+    /*//////////////////////////////////////////////////////////////
+                            BUY REQUEST AND APPROVAL
+    //////////////////////////////////////////////////////////////*/
+    //////////////////////// ISSUANCE //////////////////////////////
+    //////////////////////// APPROVAL //////////////////////////////
+    // TODO: prepare for future Deposit contract
+
+    /*//////////////////////////////////////////////////////////////
+                            PRICE FLOOR UPDATE
+    //////////////////////////////////////////////////////////////*/
 }
