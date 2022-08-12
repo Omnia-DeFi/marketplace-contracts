@@ -32,6 +32,18 @@ contract Marketplace {
     ///@dev AssetNft => Asset ID => Floor Price
     mapping(AssetNft => mapping(uint256 => uint256)) public floorPriceOf;
 
+    /*//////////////////////////////////////////////////////////////
+                                 MODIFIERS
+    //////////////////////////////////////////////////////////////*/
+    modifier onlyAssetOwner(AssetNft assetNft, uint256 assetId) {
+        require(assetNft.ownerOf(assetId) == msg.sender, "NOT_OWNER");
+        _;
+    }
+    modifier priceAboveZero(uint256 price) {
+        require(price > 0, "ZERO_FLOOR_PRICE");
+        _;
+    }
+
     /**
      * @dev List an asset for sale with a floor price in USD.
      *
@@ -46,10 +58,7 @@ contract Marketplace {
         AssetNft assetNft,
         uint256 assetId,
         uint256 floorPrice
-    ) public {
-        require(assetNft.ownerOf(assetId) == msg.sender, "NOT_OWNER");
-        require(floorPrice > 0, "ZERO_FLOOR_PRICE");
-
+    ) public onlyAssetOwner(assetNft, assetId) priceAboveZero(floorPrice) {
         floorPriceOf[assetNft][assetId] = floorPrice;
 
         emit AssetListedForSale(assetNft, assetId, floorPrice);
