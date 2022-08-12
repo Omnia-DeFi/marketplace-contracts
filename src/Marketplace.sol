@@ -37,6 +37,10 @@ contract Marketplace {
      *
      * @param assetNft The asset to list for sale.
      * @param floorPrice The floor price in USD.
+     *
+     * Requirements:
+     * - only the asset owner can list an asset for sale.
+     * - the asset price must be greater than 0.
      */
     function listAssetForSale(
         AssetNft assetNft,
