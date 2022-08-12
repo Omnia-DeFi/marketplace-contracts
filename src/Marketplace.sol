@@ -8,7 +8,8 @@ import {AssetNft} from "omnia-nft/AssetNft.sol";
  *        allowing the buyer to place a buy request at floor price.
  *              (or later to place new bid)
  *
- *        Once the seller approves the buy (or bid) request. This triggers a dposit ask.
+ *        Once the seller approves the buy (or bid) request, it triggers a dposit
+ *        request.
  */
 contract Marketplace {
     /*//////////////////////////////////////////////////////////////
