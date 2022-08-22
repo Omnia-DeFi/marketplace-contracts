@@ -2,73 +2,79 @@
 pragma solidity ^0.8.13;
 
 import {AssetNft} from "omnia-nft/AssetNft.sol";
-import {ISaleConditions} from "./ISaleConditions.sol";
 import {IAssetOfferApproval} from "./IAssetOfferApproval.sol";
-
-/**
- * @notice Once, the asset offer has been approved by the seller it triggers a deposit ask
- *         for both sides and informs users about the deposit status.
- *
- *         The buyer has the choice to deposit a part of the asset offer or the whole
- *         amount in once.
- */
+import {ISaleConditions} from "./ISaleConditions.sol";
 
 interface IDeposit {
     event DepositAsked(
         AssetNft indexed asset,
-        ISaleConditions indexed conditions,
-        IAssetOfferApproval indexed approval
+        IAssetOfferApproval indexed approval,
+        ISaleConditions indexed conditions
     );
+    event BuyerDeposit(
+        address buyer,
+        address indexed asset,
+        string indexed currency,
+        uint256 indexed amount
+    );
+    event SellerDeposit(address indexed asset);
+
+    enum DepositStatus {
+        Pending,
+        BuyerPartialDeposit,
+        BuyerFullDeposit,
+        SellerFullDeposit
+    }
+
+    struct DepositState {
+        DepositStatus[] statuses;
+        bool isAssetLocked;
+    }
 
     /**
-     * @notice Ask both parties engage in the sale to deposit their due.
+     * @notice Ask both parties engaged in the sale to deposit their
+     *         due, starting with the buyer.
      *
-     * @param AssetNft The contract representing the asset.
-     * @param ISaleConditions The conditions of the sale.
-     * @param IAssetOfferApproval The approval of the asset offer.
-     *
-     * Emitts:
-     * - DepositAsked event.
+     * @param asset The contract representing the asset.
+     * @param approval The approval of the asset offer.
+     * @param conditions The conditions of the sale.
      */
-    function emitDepositAsked(
+    function emitDepositAsk(
         AssetNft asset,
-        ISaleConditions conditions,
-        IAssetOfferApproval approval
+        IAssetOfferApproval approval,
+        ISaleConditions conditions
     ) external;
 
     /**
-     * @notice The buyer will deposit at least the minimum amount of the desposit to lock
-     *         the asset for themselves.
-     *
-     *         It verifies the sale conditions are still met (e.g. sale timeframe)
-     *
-     * @dev Read the data from AssetOfferApproval.
-     *
-     * Requirements:
-     * - only the buyer registered in AssetOfferApproval can deposit.
-     * - the deposited amount MUST be greater or equal to the minimum deposit amount.
+     * @notice The buyer will deposit at least the minimum amount of the
+     *         desposit to lock the asset.
+     * @dev Read the data from AssetOfferApproval to verify the sale
+     *      conditions are still met (e.g. sale timeframe).
      */
-    function partialDepositToLockAsset(uint256 amount, address currency)
+    function partialBuyerDepositToLockAsset(uint256 amount, address currency)
         external;
 
     /**
-     * @notice Deposit the asset or the currency depending on `msg.sender`
-     *         value.
-     *
-     *         It verifies the sale conditions are still met (e.g. sale timeframe)
-     *
-     * @dev Read the data from AssetOfferApproval.
-     *      If the buyer has already made a deposit they can only deposit the rest.
-     *
-     * ⚠️ FRONTEND: Inform the buyer that this will deposit the whole amount of currency
-     *             that matches with the approved asset offer.
+     * @notice Whole deposit on both sides to consumme the sale.
+     * @dev Parameters, see `emitDepositAsk()`.
+     *      If `msg.sender`is the buyer only deposit the asset offer
+     *      price minus the deposit (if any).
+     *      If  `msg.sender`is the seller, desposit the NFTs
      */
-    function wholeDeposit() external;
+    function wholeDeposit(
+        AssetNft asset,
+        IAssetOfferApproval approval,
+        ISaleConditions conditions
+    ) external;
 
     /**
-     * @notice Inform about the deposit state.
-     *
-     * @dev Returns which partie(s) has not deposited.
+     * @notice Inform about the curent state of the deposit.
+     * @dev Parameters, see `emitDepositAsk()`.
+     * @return Which partie(s) has not deposited.
      */
-    function getDepositState() external view returns (address[]);
+    function depositState(
+        AssetNft asset,
+        IAssetOfferApproval approval,
+        ISaleConditions conditions
+    ) external view returns (DepositState memory);
 }
