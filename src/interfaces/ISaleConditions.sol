@@ -13,7 +13,7 @@ interface ISaleConditions {
     }
     struct ExtraSaleTerms {
         string label;
-        string customTerm;
+        string customTermDescription;
     }
 
     /**
