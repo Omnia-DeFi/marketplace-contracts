@@ -6,7 +6,6 @@
         "compiler-version": ["error", ">=0.8.0"],
         "constructor-syntax": "error",
         "func-visibility": ["error", { "ignoreConstructors": true }],
-        "max-line-length": ["error", 120],
         "not-rely-on-time": "off",
         "prettier/prettier": [
             "error",
@@ -14,6 +13,7 @@
                 "endOfLine": "auto"
             }
         ],
-        "reason-string": ["warn", { "maxLength": 64 }]
+        "reason-string": ["warn", { "maxLength": 64 }],
+        "no-empty-blocks": "off"
     }
 }
