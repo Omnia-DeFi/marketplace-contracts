@@ -46,15 +46,6 @@ interface IDeposit {
     ) external;
 
     /**
-     * @notice The buyer will deposit at least the minimum amount of the
-     *         desposit to lock the asset.
-     * @dev Read the data from AssetOfferApproval to verify the sale
-     *      conditions are still met (e.g. sale timeframe).
-     */
-    function partialBuyerDepositToLockAsset(uint256 amount, address currency)
-        external;
-
-    /**
      * @notice Whole deposit on both sides to consumme the sale.
      * @dev Parameters, see `emitDepositAsk()`.
      *      If `msg.sender`is the buyer only deposit the asset offer

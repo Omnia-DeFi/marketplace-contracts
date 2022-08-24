@@ -5,8 +5,6 @@ import {AssetNft} from "omnia-nft/AssetNft.sol";
 
 interface ISaleConditions {
     struct PaymentTerms {
-        uint256 minimumDeposit; // in USD
-        uint256 depositReceiptTimeframe; // at least 8 hours
         uint256 consummationSaleTimeframe; // at least 1 day
     }
     struct Conditions {
