@@ -3,38 +3,28 @@ pragma solidity ^0.8.13;
 
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {ISaleConditions} from "./ISaleConditions.sol";
+import "../libraries/ListingLib.sol";
 
 interface IAssetListing {
     event AssetListed(
         AssetNft indexed asset,
-        ISaleConditions indexed conditions,
-        ListingStatus indexed listingstatus
+        ISaleConditions.Conditions indexed conditions,
+        ISaleConditions.ExtraSaleTerms indexed extras,
+        ListingLib.Status status
     );
     event AssetUnlisted(
         AssetNft indexed asset,
         ISaleConditions indexed conditions,
-        ListingStatus indexed listingStatus
+        ListingLib.Status indexed status
     );
 
-    /**
-     * @dev Enumarates the different listing statuses depending on
-     *      SaleConditions.
-     */
-    enum ListingStatus {
-        Unlisted,
-        ActiveListing,
-        UnlistedByDeposit,
-        SaleVoided,
-        SaleCancelled,
-        SaleConsummated
-    }
     /** @dev Save the listing of an assset on the Marketplace with
      *       conditions and status.
      */
     struct Listing {
         ISaleConditions.Conditions conditions;
         ISaleConditions.ExtraSaleTerms extras;
-        ListingStatus status;
+        ListingLib.Status status;
     }
 
     /**
@@ -65,6 +55,6 @@ interface IAssetListing {
     function unlistAsset(
         AssetNft asset,
         ISaleConditions conditions,
-        ListingStatus listingStatus
+        ListingLib.Status listingStatus
     ) external returns (bool);
 }
