@@ -106,4 +106,31 @@ contract SaleConditionsTest is Test {
         emit SaleConditionsSet(a, conditions_, extras_);
         conditions.setSaleConditions(a, conditions_, extras_);
     }
+
+    function testVerifySaleConditionsSavingValues() external {
+        (
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
+        ) = returnCreatedSaleConditions();
+        // Set conditions a first, to trigger the revert below
+        conditions.setSaleConditions(asset, conditions_, extras_);
+
+        // Conditions
+        (
+            uint256 savedFloorPrice,
+            ISaleConditions.PaymentTerms memory paymentTerms
+        ) = conditions.saleConditionsOf(asset);
+        assertEq(savedFloorPrice, conditions_.floorPrice);
+        assertEq(
+            paymentTerms.consummationSaleTimeframe,
+            conditions_.paymentTerms.consummationSaleTimeframe
+        );
+        //Extra terms
+        (
+            string memory savedLabel,
+            string memory savedeTermDescription
+        ) = conditions.extraSaleConditionsOf(asset);
+        assertEq(savedLabel, extras_.label);
+        assertEq(savedeTermDescription, extras_.customTermDescription);
+    }
 }
