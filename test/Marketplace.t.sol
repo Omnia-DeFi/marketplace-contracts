@@ -4,7 +4,9 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import "../src/Marketplace.sol";
-import {AssetNft} from "omnia-nft/AssetNft.sol";
+import "../src/AssetListing.sol";
+import "../src/SaleConditions.sol";
+import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -30,14 +32,23 @@ contract MarketplaceTest is Test {
                                  ASSET
     //////////////////////////////////////////////////////////////*/
     AssetNft public assetNft;
-    uint256 assetPrice;
 
     Marketplace marketplace;
+    ISaleConditions.Conditions conditionsSetUp;
+    ISaleConditions.ExtraSaleTerms extrasSetUp;
+
+    /*//////////////////////////////////////////////////////////////
+                            SET UP TEST DATA
+    //////////////////////////////////////////////////////////////*/
+    function createBaseSaleConditions() public {
+        conditionsSetUp.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
+        conditionsSetUp.paymentTerms.consummationSaleTimeframe = 24 hours;
+    }
 
     function setUp() public {
         marketplace = new Marketplace();
-        assetNft = new AssetNft(owner);
-        assetPrice = 650000 * marketplace.USD_PRICE_DECIMAL();
+        assetNft = new MockAssetNft(owner);
+        createBaseSaleConditions();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -48,52 +59,9 @@ contract MarketplaceTest is Test {
      * @dev In the frontend the price will have to be multiplied by 10**2 as blockchains
      *      don't deal with decimals.
      */
-    function testSellerListAssetForSale() external {
+    function testSellerListAssetForSaleFromMarketplace() external {
         vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
 
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-
-        // Verify listing price of the asset
-        assertEq(marketplace.floorPriceOf(assetNft, 0), assetPrice);
+        marketplace.listing().listAsset(assetNft, conditionsSetUp, extrasSetUp);
     }
-
-    function testSellerListAssetForSaleVerifyEmittanceofEvent() external {
-        vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        // Verify emittance of AssetListedForSale
-        vm.expectEmit(true, true, true, true);
-        emit AssetListedForSale(assetNft, 0, assetPrice);
-
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-    }
-
-    function testSellerListAssetForSaleFailsOnNotOwner() public {
-        vm.prank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        vm.prank(alice);
-        vm.expectRevert("NOT_OWNER");
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-    }
-
-    function testSellerListAssetForSaleFailsOnZeroFloorPrice() public {
-        vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        vm.expectRevert("ZERO_FLOOR_PRICE");
-        marketplace.listAssetForSale(assetNft, 0, 0);
-    }
-
-    /*//////////////////////////////////////////////////////////////
-                            BUY REQUEST AND APPROVAL
-    //////////////////////////////////////////////////////////////*/
-    //////////////////////// ISSUANCE //////////////////////////////
-    //////////////////////// APPROVAL //////////////////////////////
-    // TODO: prepare for future Deposit contract
-
-    /*//////////////////////////////////////////////////////////////
-                            PRICE FLOOR UPDATE
-    //////////////////////////////////////////////////////////////*/
 }
