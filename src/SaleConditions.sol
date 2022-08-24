@@ -18,14 +18,8 @@ import {Marketplace} from "./Marketplace.sol";
  *      (before desposit), etc...
  */
 contract SaleConditions is ISaleConditions {
-    Marketplace public marketplace;
-
     mapping(AssetNft => Conditions) public saleConditionsOf;
     mapping(AssetNft => ExtraSaleTerms) public extraSaleConditionsOf;
-
-    constructor(Marketplace marketplace_) {
-        marketplace = marketplace_;
-    }
 
     /*//////////////////////////////////////////////////////////////
                                  MODIFIERS
@@ -35,7 +29,7 @@ contract SaleConditions is ISaleConditions {
         _;
     }
 
-    modifier minimalSaleConditions(
+    modifier saleConditionsFormat(
         ISaleConditions.Conditions memory conditions
     ) {
         require(conditions.floorPrice > 0, "ZERO_FLOOR_PRICE");
@@ -46,31 +40,29 @@ contract SaleConditions is ISaleConditions {
         _;
     }
 
-    modifier checkExtrasTerms(ExtraSaleTerms memory extras) {
+    modifier extraTermsFormat(ExtraSaleTerms memory extras) {
         if (bytes(extras.label).length > 0) {
             require(bytes(extras.label).length >= 4, "4_CHAR_LABEL");
-            require(bytes(extras.customTerm).length >= 4, "4_CHAR_TERM");
+            require(
+                bytes(extras.customTermDescription).length >= 4,
+                "4_CHAR_TERM"
+            );
         }
         _;
     }
 
-    modifier conditionsNotSetYet(AssetNft assetNft) {
+    /**
+     * @dev if `floorPrice` is defined `consummationSaleTimeframe` is defined for sure due
+     *      to `saleConditionsFormat` modifier.
+     */
+    modifier existingSaleConditions(AssetNft assetNft) {
         require(
-            saleConditionsOf[assetNft].floorPrice == 0,
-            "CONDITIONS_SET_PRICE"
-        );
-        require(
-            saleConditionsOf[assetNft].paymentTerms.consummationSaleTimeframe ==
+            saleConditionsOf[assetNft].floorPrice > 0 &&
+                saleConditionsOf[assetNft]
+                    .paymentTerms
+                    .consummationSaleTimeframe >
                 0,
-            "CONDITIONS_SET_TIME"
-        );
-        require(
-            bytes(extraSaleConditionsOf[assetNft].label).length == 0,
-            "EXTRAS_SET"
-        );
-        require(
-            bytes(extraSaleConditionsOf[assetNft].customTerm).length == 0,
-            "EXTRAS_SET"
+            "MIN_CONDITIONS_SET"
         );
         _;
     }
@@ -80,7 +72,18 @@ contract SaleConditions is ISaleConditions {
         AssetNft asset,
         Conditions memory conditions,
         ExtraSaleTerms memory extras
-    ) external {}
+    )
+        external
+        onlyAssetOwner(asset)
+        saleConditionsFormat(conditions)
+        extraTermsFormat(extras)
+        existingSaleConditions(asset)
+    {
+        saleConditionsOf[asset] = conditions;
+        extraSaleConditionsOf[asset] = extras;
+
+        emit ConditionsSet(asset, conditions, extras);
+    }
 
     /// @inheritdoc ISaleConditions
     function updateSaleConditions(
