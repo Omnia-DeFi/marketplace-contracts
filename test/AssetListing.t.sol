@@ -65,4 +65,34 @@ contract AssetListingTest is Test {
         );
         listing.listAsset(nftAsset, conditions_, extras_);
     }
+
+    function testVerifyListingSavingValues() external {
+        (
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
+        ) = returnCreatedSaleConditions();
+
+        listing.listAsset(nftAsset, conditions_, extras_);
+
+        // Get saved listing and compare with values passed above
+        (
+            ISaleConditions.Conditions memory savedConditions,
+            ISaleConditions.ExtraSaleTerms memory savedExtras,
+            ListingLib.Status savedStatus
+        ) = listing.listingOf(nftAsset);
+
+        // fllor price
+        assertEq(savedConditions.floorPrice, conditions_.floorPrice);
+        // consumation timeframe
+        assertEq(
+            savedConditions.paymentTerms.consummationSaleTimeframe,
+            conditions_.paymentTerms.consummationSaleTimeframe
+        );
+        // payment extras
+        assertEq(savedExtras.label, extras_.label);
+        assertEq(
+            savedExtras.customTermDescription,
+            extras_.customTermDescription
+        );
+    }
 }
