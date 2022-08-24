@@ -56,14 +56,11 @@ contract SaleConditions is ISaleConditions {
      *      to `saleConditionsFormat` modifier.
      */
     modifier existingSaleConditions(AssetNft assetNft) {
-        require(
+        if (
             saleConditionsOf[assetNft].floorPrice > 0 &&
-                saleConditionsOf[assetNft]
-                    .paymentTerms
-                    .consummationSaleTimeframe >
-                0,
-            "MIN_CONDITIONS_SET"
-        );
+            saleConditionsOf[assetNft].paymentTerms.consummationSaleTimeframe >
+            0
+        ) revert("MIN_CONDITIONS_SET");
         _;
     }
 

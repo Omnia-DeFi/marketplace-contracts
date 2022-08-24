@@ -84,6 +84,8 @@ contract SaleConditionsTest is Test {
             ISaleConditions.Conditions memory conditions_,
             ISaleConditions.ExtraSaleTerms memory extras_
         ) = returnCreatedSaleConditions();
+        // Set conditions a first, to trigger the revert below
+        conditions.setSaleConditions(asset, conditions_, extras_);
 
         vm.expectRevert(abi.encodePacked("MIN_CONDITIONS_SET"));
         conditions.setSaleConditions(asset, conditions_, extras_);
