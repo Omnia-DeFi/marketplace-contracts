@@ -11,6 +11,11 @@ contract SaleConditionsTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
+    event SaleConditionsSet(
+        AssetNft indexed asset,
+        ISaleConditions.Conditions indexed conditions,
+        ISaleConditions.ExtraSaleTerms extras
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -57,7 +62,6 @@ contract SaleConditionsTest is Test {
     }
 
     function testSetSaleConditionsFailsOnExtraTermsFormatModifier() external {
-        AssetNft asset = new AssetNft("AssetMocked", "MA1", owner);
         (
             ISaleConditions.Conditions memory conditions_,
 
@@ -76,7 +80,6 @@ contract SaleConditionsTest is Test {
     }
 
     function testSetSaleConditionsFailsOnExistingSaleConditions() external {
-        AssetNft asset = new AssetNft("Other", "New", owner);
         (
             ISaleConditions.Conditions memory conditions_,
             ISaleConditions.ExtraSaleTerms memory extras_
@@ -84,5 +87,21 @@ contract SaleConditionsTest is Test {
 
         vm.expectRevert(abi.encodePacked("MIN_CONDITIONS_SET"));
         conditions.setSaleConditions(asset, conditions_, extras_);
+    }
+
+    function testEventEmittanceSaleConditionsSet() external {
+        (
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
+        ) = returnCreatedSaleConditions();
+        AssetNft a = new AssetNft(
+            "Test",
+            "Tes2",
+            0x0c7213bac2B9e7b99ABa344243C9de84227911Be
+        );
+
+        vm.expectEmit(true, true, true, true);
+        emit SaleConditionsSet(a, conditions_, extras_);
+        conditions.setSaleConditions(a, conditions_, extras_);
     }
 }

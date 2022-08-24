@@ -4,6 +4,12 @@ pragma solidity ^0.8.13;
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 
 interface ISaleConditions {
+    event SaleConditionsSet(
+        AssetNft indexed asset,
+        Conditions indexed conditions,
+        ExtraSaleTerms extras
+    );
+
     struct PaymentTerms {
         uint256 consummationSaleTimeframe; // at least 1 day
     }

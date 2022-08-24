@@ -82,7 +82,7 @@ contract SaleConditions is ISaleConditions {
         saleConditionsOf[asset] = conditions;
         extraSaleConditionsOf[asset] = extras;
 
-        emit ConditionsSet(asset, conditions, extras);
+        emit SaleConditionsSet(asset, conditions, extras);
     }
 
     /// @inheritdoc ISaleConditions
