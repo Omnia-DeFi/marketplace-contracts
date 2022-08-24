@@ -34,7 +34,7 @@ interface IAssetListing {
     struct Listing {
         ISaleConditions.Conditions conditions;
         ISaleConditions.ExtraSaleTerms extras;
-        ListingStatus listingStatus;
+        ListingStatus status;
     }
 
     /**
