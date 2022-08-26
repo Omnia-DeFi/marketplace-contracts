@@ -33,7 +33,7 @@ contract Marketplace is AssetListing, SaleConditions {
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) public {
-        listAsset(asset);
-        setSaleConditions(asset, conditions, extras);
+        _listAsset(asset);
+        _setSaleConditions(asset, conditions, extras);
     }
 }

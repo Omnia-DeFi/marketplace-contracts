@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
 import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockSaleConditions, SaleConditions} from "./mock/MockSaleConditions.sol";
-import {ISaleConditions} from "../src/interfaces/ISaleConditions.sol";
+import {SaleConditions} from "../src/SaleConditions.sol";
 
 contract MockSaleConditionsTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -14,22 +14,23 @@ contract MockSaleConditionsTest is Test {
     //////////////////////////////////////////////////////////////*/
     event SaleConditionsSet(
         AssetNft indexed asset,
-        ISaleConditions.Conditions indexed conditions,
-        ISaleConditions.ExtraSaleTerms indexed extras
+        SaleConditions.Conditions indexed conditions,
+        SaleConditions.ExtraSaleTerms indexed extras
     );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
 	//////////////////////////////////////////////////////////////*/
     MockMarketplace public marketplace;
+    MockSaleConditions public saleConditions;
     AssetNft asset;
     address immutable owner = msg.sender;
 
     function returnCreatedSaleConditions()
         public
         returns (
-            ISaleConditions.Conditions memory conditions_,
-            ISaleConditions.ExtraSaleTerms memory extras_
+            SaleConditions.Conditions memory conditions_,
+            SaleConditions.ExtraSaleTerms memory extras_
         )
     {
         conditions_.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
@@ -42,6 +43,7 @@ contract MockSaleConditionsTest is Test {
     function setUp() public {
         marketplace = new MockMarketplace();
         asset = new AssetNft("AssetMocked", "MA1", owner);
+        saleConditions = new MockSaleConditions();
 
         vm.prank(owner);
         asset.safeMint(
@@ -53,15 +55,15 @@ contract MockSaleConditionsTest is Test {
 
     function testOnlyAssetOwnerCanSetSaleConditions() external {
         (
-            ISaleConditions.Conditions memory conditions_,
-            ISaleConditions.ExtraSaleTerms memory extras_
+            SaleConditions.Conditions memory conditions_,
+            SaleConditions.ExtraSaleTerms memory extras_
         ) = returnCreatedSaleConditions();
         // Verify revert
         vm.expectRevert("NOT_OWNER");
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
         // Verify success
         vm.prank(owner);
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
     function testSetSaleConditionsFailsOnSaleConditionsFormatModifier()
@@ -69,79 +71,79 @@ contract MockSaleConditionsTest is Test {
     {
         vm.startPrank(owner);
 
-        ISaleConditions.Conditions memory conditions_;
-        ISaleConditions.ExtraSaleTerms memory extras_;
+        SaleConditions.Conditions memory conditions_;
+        SaleConditions.ExtraSaleTerms memory extras_;
         // No floor price
         vm.expectRevert(abi.encodePacked("ZERO_FLOOR_PRICE"));
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
         // Floor price set but not the consummation timeframe of the sale
         conditions_.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
         vm.expectRevert(abi.encodePacked("MIN_24H_SALE"));
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
     function testSetSaleConditionsFailsOnExtraTermsFormatModifier() external {
         vm.startPrank(owner);
 
         (
-            ISaleConditions.Conditions memory conditions_,
+            SaleConditions.Conditions memory conditions_,
 
         ) = returnCreatedSaleConditions();
-        ISaleConditions.ExtraSaleTerms memory extras_;
+        SaleConditions.ExtraSaleTerms memory extras_;
 
         // Label of extra terms too short, at least 4 characters required
         extras_.label = "333";
         vm.expectRevert(abi.encodePacked("4_CHAR_LABEL"));
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
         //  too short, at least 4 characters required
         extras_.label = "RandomLabel";
         extras_.customTermDescription = "sho";
         vm.expectRevert(abi.encodePacked("4_CHAR_TERM"));
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
     function testSetSaleConditionsFailsOnExistingSaleConditions() external {
         vm.startPrank(owner);
 
         (
-            ISaleConditions.Conditions memory conditions_,
-            ISaleConditions.ExtraSaleTerms memory extras_
+            SaleConditions.Conditions memory conditions_,
+            SaleConditions.ExtraSaleTerms memory extras_
         ) = returnCreatedSaleConditions();
         // Set conditions a first, to trigger the revert below
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
 
         vm.expectRevert(abi.encodePacked("MIN_CONDITIONS_SET"));
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
     function testEventEmittanceSaleConditionsSet() external {
         vm.startPrank(owner);
 
         (
-            ISaleConditions.Conditions memory conditions_,
-            ISaleConditions.ExtraSaleTerms memory extras_
+            SaleConditions.Conditions memory conditions_,
+            SaleConditions.ExtraSaleTerms memory extras_
         ) = returnCreatedSaleConditions();
 
         vm.expectEmit(true, true, true, true);
         emit SaleConditionsSet(asset, conditions_, extras_);
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
     function testVerifySaleConditionsSavingValues() external {
         vm.startPrank(owner);
 
         (
-            ISaleConditions.Conditions memory conditions_,
-            ISaleConditions.ExtraSaleTerms memory extras_
+            SaleConditions.Conditions memory conditions_,
+            SaleConditions.ExtraSaleTerms memory extras_
         ) = returnCreatedSaleConditions();
         // Set conditions a first, to trigger the revert below
-        marketplace.setSaleConditions(asset, conditions_, extras_);
+        saleConditions.setSaleConditions(asset, conditions_, extras_);
 
         // Conditions
         (
             uint256 savedFloorPrice,
-            ISaleConditions.PaymentTerms memory paymentTerms
-        ) = marketplace.saleConditionsOf(asset);
+            SaleConditions.PaymentTerms memory paymentTerms
+        ) = saleConditions.saleConditionsOf(asset);
         assertEq(savedFloorPrice, conditions_.floorPrice);
         assertEq(
             paymentTerms.consummationSaleTimeframe,
@@ -151,7 +153,7 @@ contract MockSaleConditionsTest is Test {
         (
             string memory savedLabel,
             string memory savedeTermDescription
-        ) = marketplace.extraSaleConditionsOf(asset);
+        ) = saleConditions.extraSaleConditionsOf(asset);
         assertEq(savedLabel, extras_.label);
         assertEq(savedeTermDescription, extras_.customTermDescription);
     }

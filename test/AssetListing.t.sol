@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import {ISaleConditions} from "../src/interfaces/ISaleConditions.sol";
+import {SaleConditions} from "../src/SaleConditions.sol";
 import "../src/libraries/ListingLib.sol";
 import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";

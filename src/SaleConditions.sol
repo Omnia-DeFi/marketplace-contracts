@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./interfaces/ISaleConditions.sol";
+import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {OwnableAsset} from "./OwnableAsset.sol";
 
 /**
@@ -17,7 +17,25 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  *      lock the asset, sale  consummated, sale cancelled, sale voided
  *      (before desposit), etc...
  */
-abstract contract SaleConditions is ISaleConditions, OwnableAsset {
+abstract contract SaleConditions is OwnableAsset {
+    event SaleConditionsSet(
+        AssetNft indexed asset,
+        Conditions indexed conditions,
+        ExtraSaleTerms indexed extras
+    );
+
+    struct PaymentTerms {
+        uint256 consummationSaleTimeframe; // at least 1 day
+    }
+    struct Conditions {
+        uint256 floorPrice; // price defined by the owner, in USD
+        PaymentTerms paymentTerms;
+    }
+    struct ExtraSaleTerms {
+        string label;
+        string customTermDescription;
+    }
+
     mapping(AssetNft => Conditions) public saleConditionsOf;
     mapping(AssetNft => ExtraSaleTerms) public extraSaleConditionsOf;
 
@@ -57,13 +75,23 @@ abstract contract SaleConditions is ISaleConditions, OwnableAsset {
         _;
     }
 
-    /// @inheritdoc ISaleConditions
-    function setSaleConditions(
+    /**
+     * @notice The seller (NFT asset owner) defines the conditions for
+     *         the sale, which includes but not limited to: minmum
+     *         deposit amount to lock the asset, the timeframe for the
+     *         deposit, the timeframe for sale to be concluded, and any
+     *         extra conditions that the seller requires.
+     *
+     * @param asset The adress of the asset NFT repository.
+     * @param conditions The conditions of the sale.
+     * @param extras Any extra terms required by the seller.
+     */
+    function _setSaleConditions(
         AssetNft asset,
         Conditions memory conditions,
         ExtraSaleTerms memory extras
     )
-        public
+        internal
         onlyAssetOwner(asset)
         saleConditionsFormat(conditions)
         extraTermsFormat(extras)
@@ -75,10 +103,14 @@ abstract contract SaleConditions is ISaleConditions, OwnableAsset {
         emit SaleConditionsSet(asset, conditions, extras);
     }
 
-    /// @inheritdoc ISaleConditions
-    function updateSaleConditions(
+    /**
+     * @notice The seller can update the conditions for the sale prior
+     *         to an deposit.
+     * @dev Same parameters as `setSaleConditions()`.
+     */
+    function _updateSaleConditions(
         address asset,
         Conditions memory conditions,
         ExtraSaleTerms memory extras
-    ) external {}
+    ) internal {}
 }

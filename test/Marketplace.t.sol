@@ -34,8 +34,8 @@ contract MarketplaceTest is Test {
     AssetNft public assetNft;
 
     Marketplace marketplace;
-    ISaleConditions.Conditions conditionsSetUp;
-    ISaleConditions.ExtraSaleTerms extrasSetUp;
+    SaleConditions.Conditions conditionsSetUp;
+    SaleConditions.ExtraSaleTerms extrasSetUp;
 
     /*//////////////////////////////////////////////////////////////
                             SET UP TEST DATA
