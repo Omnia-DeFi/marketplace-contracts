@@ -27,4 +27,13 @@ contract Marketplace is AssetListing, SaleConditions {
     //////////////////////////////////////////////////////////////*/
     mapping(string => address) public supportedCurrenciesAddress;
     mapping(address => string) public supportedCurrenciesTicker;
+
+    function listAssetWithSaleConditions(
+        AssetNft asset,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) public {
+        listAsset(asset);
+        setSaleConditions(asset, conditions, extras);
+    }
 }

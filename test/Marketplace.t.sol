@@ -67,9 +67,13 @@ contract MarketplaceTest is Test {
      * @dev In the frontend the price will have to be multiplied by 10**2 as blockchains
      *      don't deal with decimals.
      */
-    function testSellerListAssetForSaleFromMarketplace() external {
+    function testSellerCanListAnAssetAndSetSaleConditions() external {
         vm.startPrank(owner);
 
-        marketplace.listAsset(assetNft, conditionsSetUp, extrasSetUp);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
     }
 }
