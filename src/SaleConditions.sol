@@ -2,6 +2,7 @@
 pragma solidity ^0.8.13;
 
 import "./interfaces/ISaleConditions.sol";
+import {OwnableAsset} from "./OwnableAsset.sol";
 import {Marketplace} from "./Marketplace.sol";
 
 /**
@@ -17,18 +18,13 @@ import {Marketplace} from "./Marketplace.sol";
  *      lock the asset, sale  consummated, sale cancelled, sale voided
  *      (before desposit), etc...
  */
-contract SaleConditions is ISaleConditions {
+contract SaleConditions is ISaleConditions, OwnableAsset {
     mapping(AssetNft => Conditions) public saleConditionsOf;
     mapping(AssetNft => ExtraSaleTerms) public extraSaleConditionsOf;
 
     /*//////////////////////////////////////////////////////////////
                                  MODIFIERS
     //////////////////////////////////////////////////////////////*/
-    modifier onlyAssetOwner(AssetNft assetNft) {
-        // require(assetNft.owner(assetId) == msg.sender, "NOT_OWNER");
-        _;
-    }
-
     modifier saleConditionsFormat(
         ISaleConditions.Conditions memory conditions
     ) {

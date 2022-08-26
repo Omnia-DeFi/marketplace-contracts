@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: SPDX-2.0-or-later
 pragma solidity ^0.8.13;
 
-import {AssetNft} from "omnia-nft/AssetNft.sol";
+import {OwnableAsset} from "./OwnableAsset.sol";
 import {IAssetListing} from "./interfaces/IAssetListing.sol";
 import {ISaleConditions} from "./interfaces/ISaleConditions.sol";
+import {AssetNft} from "omnia-nft/AssetNft.sol";
 import "./libraries/ListingLib.sol";
 import {Marketplace} from "./Marketplace.sol";
 
@@ -18,18 +19,13 @@ import {Marketplace} from "./Marketplace.sol";
  *         has been made to lock the asset, the sale has been
  *         consummated or the sale has been cancelled.
  */
-contract AssetListing is IAssetListing {
+contract AssetListing is IAssetListing, OwnableAsset {
     Marketplace public marketplace;
 
     mapping(AssetNft => Listing) public listingOf;
 
     constructor(Marketplace marketplace_) {
         marketplace = marketplace_;
-    }
-
-    modifier onlyAssetOwner(AssetNft assetNft) {
-        // require(assetNft.owner(assetId) == msg.sender, "NOT_OWNER");
-        _;
     }
 
     /// @inheritdoc IAssetListing
