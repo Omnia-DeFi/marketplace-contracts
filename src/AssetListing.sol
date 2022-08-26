@@ -3,7 +3,6 @@ pragma solidity ^0.8.13;
 
 import {OwnableAsset} from "./OwnableAsset.sol";
 import {IAssetListing} from "./interfaces/IAssetListing.sol";
-import {ISaleConditions} from "./interfaces/ISaleConditions.sol";
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import "./libraries/ListingLib.sol";
 
