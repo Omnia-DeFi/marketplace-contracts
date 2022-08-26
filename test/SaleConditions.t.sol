@@ -28,15 +28,15 @@ contract MockSaleConditionsTest is Test {
     function returnCreatedSaleConditions()
         public
         returns (
-            ISaleConditions.Conditions memory conditions,
-            ISaleConditions.ExtraSaleTerms memory extras
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
         )
     {
-        conditions.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
-        conditions.paymentTerms.consummationSaleTimeframe = 24 hours;
+        conditions_.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
+        conditions_.paymentTerms.consummationSaleTimeframe = 24 hours;
 
-        extras.label = "RandomLabel";
-        extras.customTermDescription = "short";
+        extras_.label = "RandomLabel";
+        extras_.customTermDescription = "short";
     }
 
     function setUp() public {
