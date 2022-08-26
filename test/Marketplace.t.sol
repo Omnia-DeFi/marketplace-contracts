@@ -47,7 +47,15 @@ contract MarketplaceTest is Test {
 
     function setUp() public {
         marketplace = new Marketplace();
-        assetNft = new MockAssetNft(owner);
+        assetNft = new AssetNft("AssetMocked", "MA1", owner);
+
+        vm.prank(owner);
+        assetNft.safeMint(
+            owner,
+            0,
+            "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
+        );
+
         createBaseSaleConditions();
     }
 
@@ -62,6 +70,6 @@ contract MarketplaceTest is Test {
     function testSellerListAssetForSaleFromMarketplace() external {
         vm.startPrank(owner);
 
-        marketplace.listing().listAsset(assetNft, conditionsSetUp, extrasSetUp);
+        marketplace.listAsset(assetNft, conditionsSetUp, extrasSetUp);
     }
 }

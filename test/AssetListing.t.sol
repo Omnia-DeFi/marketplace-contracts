@@ -4,12 +4,12 @@ pragma solidity ^0.8.13;
 import "forge-std/Test.sol";
 
 import {ISaleConditions} from "../src/interfaces/ISaleConditions.sol";
-import {AssetListing} from "../src/AssetListing.sol";
 import "../src/libraries/ListingLib.sol";
 import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
+import {MockAssetListing} from "./mock/MockAssetListing.sol";
 
-contract AssetListingTest is Test {
+contract MockAssetListingTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
@@ -25,7 +25,7 @@ contract AssetListingTest is Test {
 	//////////////////////////////////////////////////////////////*/
     AssetNft public nftAsset;
     MockMarketplace public marketplace;
-    AssetListing public listing;
+    MockAssetListing public listing;
     address immutable owner = msg.sender;
 
     function returnCreatedSaleConditions()
@@ -43,14 +43,23 @@ contract AssetListingTest is Test {
     }
 
     function setUp() public {
-        nftAsset = new MockAssetNft(owner);
+        nftAsset = new AssetNft("AssetMocked", "MA1", owner);
         marketplace = new MockMarketplace();
-        listing = new AssetListing(marketplace);
+        listing = new MockAssetListing();
+
+        vm.prank(owner);
+        nftAsset.safeMint(
+            owner,
+            0,
+            "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
+        );
     }
 
     function testOnlyOwnerCanListAsset() external {}
 
     function testEventEmittanceAssetListed() external {
+        vm.startPrank(owner);
+
         (
             ISaleConditions.Conditions memory conditions_,
             ISaleConditions.ExtraSaleTerms memory extras_
@@ -67,6 +76,8 @@ contract AssetListingTest is Test {
     }
 
     function testVerifyListingSavingValues() external {
+        vm.startPrank(owner);
+
         (
             ISaleConditions.Conditions memory conditions_,
             ISaleConditions.ExtraSaleTerms memory extras_
