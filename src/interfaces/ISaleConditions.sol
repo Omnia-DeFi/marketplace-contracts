@@ -7,7 +7,7 @@ interface ISaleConditions {
     event SaleConditionsSet(
         AssetNft indexed asset,
         Conditions indexed conditions,
-        ExtraSaleTerms extras
+        ExtraSaleTerms indexed extras
     );
 
     struct PaymentTerms {

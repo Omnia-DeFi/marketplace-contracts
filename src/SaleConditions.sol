@@ -24,9 +24,7 @@ abstract contract SaleConditions is ISaleConditions, OwnableAsset {
     /*//////////////////////////////////////////////////////////////
                                  MODIFIERS
     //////////////////////////////////////////////////////////////*/
-    modifier saleConditionsFormat(
-        ISaleConditions.Conditions memory conditions
-    ) {
+    modifier saleConditionsFormat(Conditions memory conditions) {
         require(conditions.floorPrice > 0, "ZERO_FLOOR_PRICE");
         require(
             conditions.paymentTerms.consummationSaleTimeframe >= 24 hours,
@@ -65,7 +63,7 @@ abstract contract SaleConditions is ISaleConditions, OwnableAsset {
         Conditions memory conditions,
         ExtraSaleTerms memory extras
     )
-        external
+        public
         onlyAssetOwner(asset)
         saleConditionsFormat(conditions)
         extraTermsFormat(extras)

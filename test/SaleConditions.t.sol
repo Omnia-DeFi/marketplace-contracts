@@ -15,7 +15,7 @@ contract MockSaleConditionsTest is Test {
     event SaleConditionsSet(
         AssetNft indexed asset,
         ISaleConditions.Conditions indexed conditions,
-        ISaleConditions.ExtraSaleTerms extras
+        ISaleConditions.ExtraSaleTerms indexed extras
     );
 
     /*//////////////////////////////////////////////////////////////
