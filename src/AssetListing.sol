@@ -6,7 +6,6 @@ import {IAssetListing} from "./interfaces/IAssetListing.sol";
 import {ISaleConditions} from "./interfaces/ISaleConditions.sol";
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import "./libraries/ListingLib.sol";
-import {Marketplace} from "./Marketplace.sol";
 
 /**
  * @notice The asset owner list an asset on the Marketplace while
@@ -19,14 +18,8 @@ import {Marketplace} from "./Marketplace.sol";
  *         has been made to lock the asset, the sale has been
  *         consummated or the sale has been cancelled.
  */
-contract AssetListing is IAssetListing, OwnableAsset {
-    Marketplace public marketplace;
-
+abstract contract AssetListing is IAssetListing, OwnableAsset {
     mapping(AssetNft => Listing) public listingOf;
-
-    constructor(Marketplace marketplace_) {
-        marketplace = marketplace_;
-    }
 
     /// @inheritdoc IAssetListing
     function listAsset(
@@ -41,12 +34,6 @@ contract AssetListing is IAssetListing, OwnableAsset {
         listing.status = ListingLib.Status.ActiveListing;
 
         listingOf[asset] = listing;
-
-        marketplace.saleConditions().setSaleConditions(
-            asset,
-            conditions,
-            extras
-        );
 
         emit AssetListed(
             asset,

@@ -15,7 +15,7 @@ import {SaleConditions} from "./SaleConditions.sol";
  * @dev Connects AssetListing, SaleConditions, AssetOfferAproval,
  *      Deposit & SaleConsummation contracts together.
  */
-contract Marketplace {
+contract Marketplace is AssetListing, SaleConditions {
     /*//////////////////////////////////////////////////////////////
                                  CONSTANTS
     //////////////////////////////////////////////////////////////*/
@@ -27,15 +27,4 @@ contract Marketplace {
     //////////////////////////////////////////////////////////////*/
     mapping(string => address) public supportedCurrenciesAddress;
     mapping(address => string) public supportedCurrenciesTicker;
-
-    /*//////////////////////////////////////////////////////////////
-                                 EXTERNAL CONTRACTS
-    //////////////////////////////////////////////////////////////*/
-    AssetListing public listing;
-    SaleConditions public saleConditions;
-
-    constructor() {
-        listing = new AssetListing(this);
-        saleConditions = new SaleConditions();
-    }
 }
