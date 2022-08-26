@@ -51,7 +51,18 @@ contract MockSaleConditionsTest is Test {
         );
     }
 
-    function testOnlyAssetOwnerCanSetSaleConditions() external {}
+    function testOnlyAssetOwnerCanSetSaleConditions() external {
+        (
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
+        ) = returnCreatedSaleConditions();
+        // Verify revert
+        vm.expectRevert("NOT_OWNER");
+        marketplace.setSaleConditions(asset, conditions_, extras_);
+        // Verify success
+        vm.prank(owner);
+        marketplace.setSaleConditions(asset, conditions_, extras_);
+    }
 
     function testSetSaleConditionsFailsOnSaleConditionsFormatModifier()
         external

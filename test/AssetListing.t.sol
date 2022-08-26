@@ -55,7 +55,19 @@ contract MockAssetListingTest is Test {
         );
     }
 
-    function testOnlyOwnerCanListAsset() external {}
+    function testOnlyOwnerCanListAsset() external {
+        (
+            ISaleConditions.Conditions memory conditions_,
+            ISaleConditions.ExtraSaleTerms memory extras_
+        ) = returnCreatedSaleConditions();
+
+        // Verify revert
+        vm.expectRevert("NOT_OWNER");
+        listing.listAsset(nftAsset, conditions_, extras_);
+        // verify success after prank
+        vm.prank(owner);
+        listing.listAsset(nftAsset, conditions_, extras_);
+    }
 
     function testEventEmittanceAssetListed() external {
         vm.startPrank(owner);
