@@ -19,34 +19,18 @@ import "./libraries/ListingLib.sol";
  *         consummated or the sale has been cancelled.
  */
 abstract contract AssetListing is IAssetListing, OwnableAsset {
-    mapping(AssetNft => Listing) public listingOf;
+    mapping(AssetNft => ListingLib.Status) public listingStatusOf;
 
     /// @inheritdoc IAssetListing
-    function listAsset(
-        AssetNft asset,
-        ISaleConditions.Conditions memory conditions,
-        ISaleConditions.ExtraSaleTerms memory extras
-    ) external onlyAssetOwner(asset) {
-        Listing memory listing;
+    function listAsset(AssetNft asset) public onlyAssetOwner(asset) {
+        listingStatusOf[asset] = ListingLib.Status.ActiveListing;
 
-        listing.conditions = conditions;
-        listing.extras = extras;
-        listing.status = ListingLib.Status.ActiveListing;
-
-        listingOf[asset] = listing;
-
-        emit AssetListed(
-            asset,
-            listing.conditions,
-            listing.extras,
-            listing.status
-        );
+        emit AssetListed(asset, listingStatusOf[asset]);
     }
 
     /// @inheritdoc IAssetListing
-    function unlistAsset(
-        AssetNft asset,
-        ISaleConditions conditions,
-        ListingLib.Status listingStatus
-    ) external returns (bool) {}
+    function unlistAsset(AssetNft asset, ListingLib.Status listingStatus)
+        external
+        returns (bool)
+    {}
 }
