@@ -1,35 +1,33 @@
 // SPDX-License-Identifier: SPDX-2.0-or-later
 pragma solidity ^0.8.13;
 
-import {ISaleConditions} from "./ISaleConditions.sol";
+import {AssetNft} from "omnia-nft/AssetNft.sol";
+import {SaleConditions} from "./SaleConditions.sol";
 
-interface IAssetOfferApproval {
+/**
+ * @notice Contract that allows a seller to approve a buy request that
+ *         was placed off-chain by a specific buyer.
+ *         Approving a sale request will lead to a deposit triggered by
+ *         the Marketplace.
+ */
+contract OfferApproval {
     event OfferApprovedAtFloorPrice(
-        address indexed asset,
-        address indexed buyer,
-        ISaleConditions indexed conditions
+        AssetNft indexed asset,
+        OfferApproval indexed approval
     );
     event OfferApprovedAtCustomPrice(
-        address indexed asset,
-        address indexed buyer,
-        uint256 indexed salePrice,
-        ISaleConditions conditions
+        AssetNft indexed asset,
+        OfferApproval indexed approval
     );
 
-    struct FloorPriceOfferApproval {
-        address assetOwner;
-        address buyer;
-        uint256 approvalTimestamp;
-        ISaleConditions conditions;
-        bool ownerSignature; // TODO: add owner's signature
-    }
-    struct CustomPriceOfferApproval {
+    struct OfferApproval {
         address assetOwner;
         address buyer;
         bool atFloorPrice;
         uint256 price;
         uint256 approvalTimestamp;
-        ISaleConditions conditions;
+        SaleConditions.Conditions conditions;
+        SaleConditions.ExtraSaleTerms extras;
         bool ownerSignature; // TODO: add owner's signature
     }
 
@@ -42,11 +40,11 @@ interface IAssetOfferApproval {
      * @param conditions Conditions of the sale for this asset.
      */
     // TODO: pass owner's signature
-    function approveSaleOfAtFloorPrice(
-        address asset,
+    function _approveSaleOfAtFloorPrice(
+        AssetNft asset,
         address buyer,
-        ISaleConditions conditions
-    ) external;
+        SaleConditions conditions
+    ) internal {}
 
     /**
      * @notice Save a buy request for a specific NFT asset with a custom
@@ -58,10 +56,10 @@ interface IAssetOfferApproval {
      * @param conditions Conditions of the sale for this asset.
      */
     // TODO: pass owner's signature
-    function approveSaleOfAtCustomPrice(
-        address asset,
+    function _approveSaleOfAtCustomPrice(
+        AssetNft asset,
         address buyer,
         uint256 salePrice,
-        ISaleConditions conditions
-    ) external;
+        SaleConditions conditions
+    ) internal {}
 }
