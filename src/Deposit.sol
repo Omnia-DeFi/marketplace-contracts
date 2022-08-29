@@ -32,27 +32,34 @@ contract Deposit {
         Pending,
         BuyerFullDeposit,
         SellerFullDeposit,
-        AllDepositCompleted
+        AllDepositMade
     }
 
     struct DepositState {
-        DepositStatus[] statuses;
+        DepositStatus status;
         bool isAssetLocked;
+        OfferApproval.Approval approval;
     }
+
+    mapping(AssetNft => DepositState) public depositStateOf;
 
     /**
      * @notice Ask both parties engaged in the sale to deposit their
      *         due, starting with the buyer.
+     * @dev DepositState.isAssetLocked is set to false by default.
      *
      * @param asset The contract representing the asset.
      * @param approval The approval of the asset offer.
-     * @param conditions The conditions of the sale.
      */
     function _emitDepositAsk(
         AssetNft asset,
-        OfferApproval approval,
-        SaleConditions conditions
-    ) internal {}
+        OfferApproval.Approval memory approval
+    ) internal {
+        // Update status and approval. Asset is not locked as not deposit has beeen made
+        // yet. By default a bollean is false, so no need to update it to false.
+        depositStateOf[asset].status = DepositStatus.Pending;
+        depositStateOf[asset].approval = approval;
+    }
 
     /**
      * @notice Whole deposit on both sides to consumme the sale.
@@ -71,7 +78,7 @@ contract Deposit {
      * @notice Inform about the curent state of the deposit.
      * @dev Parameters, see `emitDepositAsk()`.
      * @return DepositState enum, representing the current state of the deposit mentionning
-     *         which party has already deposited.
+     *         which party has already deposited and if the asset is locked for the buyer.
      */
     function _depositState(
         AssetNft asset,
