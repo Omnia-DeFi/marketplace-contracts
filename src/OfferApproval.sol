@@ -3,6 +3,7 @@ pragma solidity ^0.8.13;
 
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {SaleConditions} from "./SaleConditions.sol";
+import {OwnableAsset} from "./OwnableAsset.sol";
 
 /**
  * @notice Contract that allows a seller to approve a buy request that
@@ -10,7 +11,7 @@ import {SaleConditions} from "./SaleConditions.sol";
  *         Approving a sale request will lead to a deposit triggered by
  *         the Marketplace.
  */
-contract OfferApproval {
+contract OfferApproval is OwnableAsset {
     event OfferApprovedAtFloorPrice(
         AssetNft indexed asset,
         OfferApproval indexed approval
@@ -43,8 +44,10 @@ contract OfferApproval {
     function _approveSaleOfAtFloorPrice(
         AssetNft asset,
         address buyer,
-        SaleConditions conditions
-    ) internal {}
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) internal onlyAssetOwner(asset) {
+    }
 
     /**
      * @notice Save a buy request for a specific NFT asset with a custom
@@ -60,6 +63,7 @@ contract OfferApproval {
         AssetNft asset,
         address buyer,
         uint256 salePrice,
-        SaleConditions conditions
-    ) internal {}
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) internal onlyAssetOwner(asset) {}
 }

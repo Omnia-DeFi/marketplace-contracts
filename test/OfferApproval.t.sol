@@ -20,7 +20,16 @@ contract MockAssetListingTest is Test {
     AssetNft public nftAsset;
     MockMarketplace public marketplace;
     MockOfferApproval public approval;
+    SaleConditions.Conditions conditionsSetUp;
+    SaleConditions.ExtraSaleTerms extrasSetUp;
+
     address immutable owner = msg.sender;
+    address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
+
+    function createBaseSaleConditions() public {
+        conditionsSetUp.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
+        conditionsSetUp.paymentTerms.consummationSaleTimeframe = 24 hours;
+    }
 
     function setUp() public {
         nftAsset = new AssetNft("AssetMocked", "MA1", owner);
@@ -35,5 +44,43 @@ contract MockAssetListingTest is Test {
         );
     }
 
+    function testOnlyOwnerCanApproveAnOffer() external {
+        vm.startPrank(owner);
+        // at floor price
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+        // custom price
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            8902342 * 100,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
+
+    function testOfferApprvoalFailsOnNotOwner() external {
+        // at floor price
+        vm.expectRevert("NOT_OWNER");
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+        // custom price
+        vm.expectRevert("NOT_OWNER");
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            8902342 * 100,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
     function testOnlyOwnerCanApproveAnOffer() external {}
 }

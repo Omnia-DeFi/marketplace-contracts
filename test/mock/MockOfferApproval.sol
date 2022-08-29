@@ -7,17 +7,25 @@ contract MockOfferApproval is OfferApproval {
     function approveSaleOfAtFloorPrice(
         AssetNft asset,
         address buyer,
-        SaleConditions conditions
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
     ) public {
-        _approveSaleOfAtFloorPrice(asset, buyer, conditions);
+        _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
     }
 
     function approveSaleOfAtCustomPrice(
         AssetNft asset,
         address buyer,
         uint256 salePrice,
-        SaleConditions conditions
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
     ) public {
-        _approveSaleOfAtCustomPrice(asset, buyer, salePrice, conditions);
+        _approveSaleOfAtCustomPrice(
+            asset,
+            buyer,
+            salePrice,
+            conditions,
+            extras
+        );
     }
 }
