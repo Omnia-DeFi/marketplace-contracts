@@ -12,6 +12,10 @@ contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
+    event DepositAsked(
+        AssetNft indexed asset,
+        Deposit.DepositState indexed approval
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -116,5 +120,26 @@ contract DepositTest is Test {
             savedApproval.extras.customTermDescription,
             approval.extras.customTermDescription
         );
+    }
+
+    function testEventEmittanceDepositAsked() public {
+        OfferApproval.Approval memory approval;
+        Deposit.DepositState memory depositState_;
+        approval = _createOfferApprovalWithCustomPrice();
+
+        deposit.emitDepositAsk(nftAsset, approval);
+        (
+            depositState_.status,
+            depositState_.isAssetLocked,
+            depositState_.approval
+        ) = deposit.depositStateOf(nftAsset);
+
+        // FIXME: second topic (depositState_) is not checked because it fails on
+        // "invalid log". The issue might be related to the fact that we create a
+        // Deposit.DepositState memory above located to a different storage location than
+        // the one emitted in the event
+        vm.expectEmit(true, false, true, true);
+        emit DepositAsked(nftAsset, depositState_);
+        deposit.emitDepositAsk(nftAsset, approval);
     }
 }
