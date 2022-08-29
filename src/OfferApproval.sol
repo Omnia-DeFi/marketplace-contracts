@@ -35,6 +35,20 @@ contract OfferApproval is OwnableAsset {
     mapping(AssetNft => Approval) public approvedOfferOf;
 
     /**
+     * @notice Only approve an offer if there is none other approved.
+     * @dev Checks that one or many parameters of struct Approval are not set.
+     */
+    modifier onlyOneOfferApproval(AssetNft asset) {
+        if (
+            approvedOfferOf[asset].buyer != address(0) ||
+            approvedOfferOf[asset].price != 0 ||
+            approvedOfferOf[asset].approvalTimestamp != 0 ||
+            approvedOfferOf[asset].ownerSignature
+        ) revert("ALREADY_APPROVED");
+        _;
+    }
+
+    /**
      * @notice Save a buy request for a specific NFT asset at floor
      *         price.
      *
@@ -47,7 +61,7 @@ contract OfferApproval is OwnableAsset {
         address buyer,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) internal onlyAssetOwner(asset) {
+    ) internal onlyAssetOwner(asset) onlyOneOfferApproval(asset) {
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = true;
         approvedOfferOf[asset].price = conditions.floorPrice;
@@ -74,7 +88,7 @@ contract OfferApproval is OwnableAsset {
         uint256 salePrice,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) internal onlyAssetOwner(asset) {
+    ) internal onlyAssetOwner(asset) onlyOneOfferApproval(asset) {
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = false;
         approvedOfferOf[asset].price = salePrice;
