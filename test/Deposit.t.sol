@@ -29,6 +29,7 @@ contract DepositTest is Test {
 
     address immutable owner = msg.sender;
     address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
+    address randomWallet = 0x5DcB78343780E1B1e578ae0590dc1e868792a435;
 
     function _createOfferApprovalWithCustomPrice()
         internal
@@ -143,6 +144,29 @@ contract DepositTest is Test {
         vm.expectEmit(true, false, true, true);
         emit DepositAsked(nftAsset, depositState_);
         deposit.emitDepositAsk(nftAsset, approval);
+    }
+
+    function testOnlyApprovedBuyerCanMakeDeposit() public {
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        uint256 usdcMintedToBuyer = 6450592 * 10**18;
+        USDC.mint(randomWallet, usdcMintedToBuyer);
+        // Verify and save USDC blance of buyer
+        assertEq(USDC.balanceOf(randomWallet), usdcMintedToBuyer);
+
+        // Simulate a deposit ask after an offer has been approved
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
+        deposit.emitDepositAsk(nftAsset, approval);
+
+        vm.startPrank(randomWallet);
+
+        // Seller approves the deposit
+        USDC.approve(address(deposit), approval.price);
+
+        // Deposit fails as `randomWallet` is not approved, only `buyer` is
+        vm.expectRevert("BUYER_NOT_APPROVED");
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
     }
 
     function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20Only()
