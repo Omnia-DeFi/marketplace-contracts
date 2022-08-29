@@ -14,15 +14,14 @@ import {OwnableAsset} from "./OwnableAsset.sol";
 contract OfferApproval is OwnableAsset {
     event OfferApprovedAtFloorPrice(
         AssetNft indexed asset,
-        OfferApproval indexed approval
+        Approval indexed approval
     );
     event OfferApprovedAtCustomPrice(
         AssetNft indexed asset,
-        OfferApproval indexed approval
+        Approval indexed approval
     );
 
-    struct OfferApproval {
-        address assetOwner;
+    struct Approval {
         address buyer;
         bool atFloorPrice;
         uint256 price;
@@ -31,6 +30,8 @@ contract OfferApproval is OwnableAsset {
         SaleConditions.ExtraSaleTerms extras;
         bool ownerSignature; // TODO: add owner's signature
     }
+
+    mapping(AssetNft => Approval) public approvedOfferOf;
 
     /**
      * @notice Save a buy request for a specific NFT asset at floor
@@ -47,6 +48,15 @@ contract OfferApproval is OwnableAsset {
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) internal onlyAssetOwner(asset) {
+        approvedOfferOf[asset].buyer = buyer;
+        approvedOfferOf[asset].atFloorPrice = true;
+        approvedOfferOf[asset].price = conditions.floorPrice;
+        approvedOfferOf[asset].approvalTimestamp = block.timestamp;
+        approvedOfferOf[asset].conditions = conditions;
+        approvedOfferOf[asset].extras = extras;
+        approvedOfferOf[asset].ownerSignature = true;
+
+        emit OfferApprovedAtFloorPrice(asset, approvedOfferOf[asset]);
     }
 
     /**

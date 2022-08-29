@@ -82,5 +82,44 @@ contract MockAssetListingTest is Test {
             extrasSetUp
         );
     }
-    function testOnlyOwnerCanApproveAnOffer() external {}
+
+    function testSavedValuesAfterOfferApprovedAtFloorPrice() external {
+        vm.startPrank(owner);
+        uint256 timestamp = block.timestamp;
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        // fetch saved offer approval
+        (
+            address savedBuyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = approval.approvedOfferOf(nftAsset);
+
+        assertEq(savedBuyer, buyer);
+        assertTrue(atFloorPrice);
+        assertEq(price, conditionsSetUp.floorPrice);
+        // Allow 3s of delay, in case computation is slow
+        assertApproxEqAbs(approvalTimestamp, timestamp, 3);
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
+    }
+
 }
