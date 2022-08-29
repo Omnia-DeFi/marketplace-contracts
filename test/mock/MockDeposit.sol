@@ -3,4 +3,11 @@ pragma solidity ^0.8.13;
 
 import {Deposit, AssetNft, SaleConditions, OfferApproval} from "../../src/Deposit.sol";
 
-contract MockDeposit is Deposit {}
+contract MockDeposit is Deposit {
+    function emitDepositAsk(
+        AssetNft asset,
+        OfferApproval.Approval memory approval
+    ) public {
+        _emitDepositAsk(asset, approval);
+    }
+}
