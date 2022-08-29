@@ -90,6 +90,9 @@ contract DepositTest is Test {
         );
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                 DEPOSIT ASK
+    //////////////////////////////////////////////////////////////*/
     function testDepositStateUpdateAfterDepositAskHasBeenTriggered() public {
         OfferApproval.Approval memory approval;
         approval = _createOfferApprovalWithCustomPrice();
@@ -152,6 +155,9 @@ contract DepositTest is Test {
         deposit.emitDepositAsk(nftAsset, approval);
     }
 
+    /*//////////////////////////////////////////////////////////////
+                                 DEPOSIT FROM BUYER
+    //////////////////////////////////////////////////////////////*/
     function testOnlyApprovedBuyerCanMakeDeposit() public {
         // Owner mints USDC to buyer
         vm.prank(owner);
@@ -266,5 +272,15 @@ contract DepositTest is Test {
         vm.expectEmit(true, true, false, true);
         emit BuyerDeposit(nftAsset, buyerData, depositState, block.timestamp);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+    }
+
+    /*//////////////////////////////////////////////////////////////
+                                 DEPOSIT FROM SELLER
+    //////////////////////////////////////////////////////////////*/
+    function testSellerCanDepositAssetNftOnlyAfterBuyerDeposit() public {
+        vm.startPrank(owner);
+
+        vm.expectRevert("BUYER_DEPOSIT_FIRST");
+        deposit.sellerDepositAssetNft(nftAsset);
     }
 }
