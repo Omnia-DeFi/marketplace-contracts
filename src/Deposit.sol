@@ -5,6 +5,7 @@ import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {SaleConditions} from "./SaleConditions.sol";
 import {OfferApproval} from "./OfferApproval.sol";
 import {OwnableAsset} from "./OwnableAsset.sol";
+import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 /**
  * @notice Once, the asset offer has been approved by the seller it
@@ -14,16 +15,15 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  *         The buyer has to deposit the whole amount of the asset offer.
  */
 contract Deposit {
-    address constant USDC = address(0x0);
-
     event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
     event BuyerDeposit(
         address buyer,
         address indexed asset,
-        string indexed currency,
-        uint256 indexed amount
+        string indexed buyerData,
+        uint256 indexed amount,
+        uint256 depositTime
     );
-    event SellerDeposit(address indexed asset);
+    event SellerDeposit(AssetNft indexed asset, uint256 indexed depositTime);
 
     enum DepositStatus {
         Void,
@@ -83,14 +83,16 @@ contract Deposit {
      * @dev Transfer ERC20 from msg.sender (buyer) to this deposit contract.
      *      For the first version we will asume only USDC will be used.
      */
-    function _buyerWholeDepositERC20(AssetNft asset) internal {
+    function _buyerWholeDepositERC20(AssetNft asset, address erc20) internal {
         uint256 transferAmount = depositStateOf[asset].approval.price;
 
-        // IERC20(USDCaddr).transferFrom(msg.sender, this, transferAmount);
+        IERC20(erc20).transferFrom(msg.sender, address(this), transferAmount);
 
+        depositedDataOf[asset].buyerData.currencyAddress = erc20;
         depositedDataOf[asset].buyerData.symbol = "USDC";
         depositedDataOf[asset].buyerData.amount = transferAmount;
-
+        // Update status of the deposit & lock the asset
         depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;
+        depositStateOf[asset].isAssetLocked = true;
     }
 }
