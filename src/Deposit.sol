@@ -67,6 +67,14 @@ abstract contract Deposit {
         _;
     }
 
+    modifier buyerDepositFirst(AssetNft asset) {
+        require(
+            depositStateOf[asset].status == DepositStatus.BuyerFullDeposit,
+            "BUYER_DEPOSIT_FIRST"
+        );
+        _;
+    }
+
     /**
      * @notice Ask both parties engaged in the sale to deposit their
      *         due, starting with the buyer.
@@ -114,5 +122,16 @@ abstract contract Deposit {
             depositStateOf[asset],
             block.timestamp
         );
+    }
+
+    /**
+     * @notice Whole deposit from seller after buyer did deposit the currency.
+     * @dev Transfer AssetNft from msg.sender (buyer) to this deposit contract.
+     */
+    function _sellerDepositAssetNft(AssetNft asset)
+        internal
+        buyerDepositFirst(asset)
+    {
+        asset.safeTransferFrom(msg.sender, address(this), 0);
     }
 }
