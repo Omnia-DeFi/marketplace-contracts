@@ -39,23 +39,23 @@ contract Deposit {
         OfferApproval.Approval approval;
     }
 
-    struct Currency {
-        // IERC20 address;
+    struct BuyerData {
+        address currencyAddress;
         string symbol;
         uint256 amount;
     }
-    struct AssetShares {
+    struct SellerData {
         AssetNft asset;
         uint256 amount;
     }
 
-    struct DepositedAssets {
-        Currency currency;
-        AssetShares shares;
+    struct DepositData {
+        BuyerData buyerData;
+        SellerData sellerData;
     }
 
     mapping(AssetNft => DepositState) public depositStateOf;
-    mapping(AssetNft => DepositedAssets) public depositedAssetsOf;
+    mapping(AssetNft => DepositData) public depositedDataOf;
 
     /**
      * @notice Ask both parties engaged in the sale to deposit their
@@ -88,8 +88,8 @@ contract Deposit {
 
         // IERC20(USDCaddr).transferFrom(msg.sender, this, transferAmount);
 
-        depositedAssetsOf[asset].currency.symbol = "USDC";
-        depositedAssetsOf[asset].currency.amount = transferAmount;
+        depositedDataOf[asset].buyerData.symbol = "USDC";
+        depositedDataOf[asset].buyerData.amount = transferAmount;
 
         depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;
     }

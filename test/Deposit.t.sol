@@ -164,12 +164,17 @@ contract DepositTest is Test {
 
         deposit.buyerWholeDepositERC20(nftAsset);
 
-        Deposit.DepositedAssets memory assets;
-        (assets.currency, assets.shares) = deposit.depositedAssetsOf(nftAsset);
+        /*//////////////////////////////////////////////////////////////
+						        RESULTS VERIFICATION
+	    //////////////////////////////////////////////////////////////*/
+        Deposit.DepositData memory assets;
+        (assets.buyerData, assets.sellerData) = deposit.depositedDataOf(
+            nftAsset
+        );
 
         // assertEq(assets.currency.address, "USDC");
-        assertEq(assets.currency.symbol, "USDC");
-        assertEq(assets.currency.amount, approval.price);
+        assertEq(assets.buyerData.symbol, "USDC");
+        assertEq(assets.buyerData.amount, approval.price);
 
         // Verify USDC balance of deposit contract == assets.currency.amount
         // Verify USDC balance of buyer == initialiBuyerBalance - assets.currency.amount
