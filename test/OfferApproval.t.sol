@@ -86,6 +86,9 @@ contract MockAssetListingTest is Test {
         );
     }
 
+    /*//////////////////////////////////////////////////////////////
+						  FLOOR PRICE
+	//////////////////////////////////////////////////////////////*/
     function testSavedValuesAfterOfferApprovedAtFloorPrice() external {
         vm.startPrank(owner);
         uint256 timestamp = block.timestamp;
@@ -140,7 +143,7 @@ contract MockAssetListingTest is Test {
         ) = approval.approvedOfferOf(nftAsset);
         // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
         //        the issue might be related to the fact that we create an OfferApproval.Approval memory
-        //        above located to a different memory location than the one used in the event
+        //        above located to a different
         vm.expectEmit(true, false, true, true, address(approval));
         emit OfferApprovedAtFloorPrice(nftAsset, approval_);
         approval.approveSaleOfAtFloorPrice(
@@ -149,5 +152,49 @@ contract MockAssetListingTest is Test {
             conditionsSetUp,
             extrasSetUp
         );
+    }
+
+    /*//////////////////////////////////////////////////////////////
+						  CUSTOM PRICE
+	//////////////////////////////////////////////////////////////*/
+    function testSavedValuesAfterOfferApprovedAtCustomPrice() external {
+        vm.startPrank(owner);
+        uint256 customPrice = 324015 * 100;
+        uint256 timestamp = block.timestamp;
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            customPrice,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        // fetch saved offer approval
+        (
+            address savedBuyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = approval.approvedOfferOf(nftAsset);
+
+        assertEq(savedBuyer, buyer);
+        assertFalse(atFloorPrice);
+        assertEq(price, customPrice);
+        // Allow 3s of delay, in case computation is slow
+        assertApproxEqAbs(approvalTimestamp, timestamp, 3);
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
     }
 }
