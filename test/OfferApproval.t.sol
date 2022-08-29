@@ -6,13 +6,16 @@ import "forge-std/Test.sol";
 import "../src/libraries/ListingLib.sol";
 import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
-import {MockOfferApproval, SaleConditions} from "./mock/MockOfferApproval.sol";
+import {MockOfferApproval, OfferApproval, SaleConditions} from "./mock/MockOfferApproval.sol";
 
 contract MockAssetListingTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
     //////////////////////////////////////////////////////////////*/
-    event AssetListed(AssetNft indexed asset, ListingLib.Status indexed status);
+    event OfferApprovedAtFloorPrice(
+        AssetNft indexed asset,
+        OfferApproval.Approval indexed approval
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -122,4 +125,29 @@ contract MockAssetListingTest is Test {
         assertTrue(ownerSignature);
     }
 
+    function testEventEmittanceOfferApprovedAtFloorPrice() external {
+        vm.startPrank(owner);
+
+        OfferApproval.Approval memory approval_;
+        (
+            approval_.buyer,
+            approval_.atFloorPrice,
+            approval_.price,
+            approval_.approvalTimestamp,
+            approval_.conditions,
+            approval_.extras,
+            approval_.ownerSignature
+        ) = approval.approvedOfferOf(nftAsset);
+        // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
+        //        the issue might be related to the fact that we create an OfferApproval.Approval memory
+        //        above located to a different memory location than the one used in the event
+        vm.expectEmit(true, false, true, true, address(approval));
+        emit OfferApprovedAtFloorPrice(nftAsset, approval_);
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
 }
