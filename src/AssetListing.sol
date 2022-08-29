@@ -10,11 +10,7 @@ import "./libraries/ListingLib.sol";
  *         settting up sale's condtions (price, payment terms & extras).
  *
  *         The asset can be unlisted by the Marketplace according to
- *         SaleConditions.
- *
- *         The asset can unlisted from the Marketplace if: a deposit
- *         has been made to lock the asset, the sale has been
- *         consummated or the sale has been cancelled.
+ *         SaleConditions or SaleConsummation.
  */
 abstract contract AssetListing is OwnableAsset {
     event AssetListed(AssetNft indexed asset, ListingLib.Status indexed status);

@@ -8,10 +8,6 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  * @notice Set the conditions for a sale of a specific asset as soon as
  *         it get listed.
  *
- *         The seller can update the conditions at any point in time
- *         prior a deposit. It is up to the buyer to find an (off-chain)
- *         agreement with the seller.
- *
  * @dev This contract can update the listing status if an asset in the
  *      Marketplace depending on conditions, such as: deposit made to
  *      lock the asset, sale  consummated, sale cancelled, sale voided
@@ -102,15 +98,4 @@ abstract contract SaleConditions is OwnableAsset {
 
         emit SaleConditionsSet(asset, conditions, extras);
     }
-
-    /**
-     * @notice The seller can update the conditions for the sale prior
-     *         to an deposit.
-     * @dev Same parameters as `setSaleConditions()`.
-     */
-    function _updateSaleConditions(
-        address asset,
-        Conditions memory conditions,
-        ExtraSaleTerms memory extras
-    ) internal {}
 }
