@@ -14,7 +14,7 @@ import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
  *
  *         The buyer has to deposit the whole amount of the asset offer.
  */
-contract Deposit {
+abstract contract Deposit {
     event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
     event BuyerDeposit(
         AssetNft indexed asset,

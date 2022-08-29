@@ -6,7 +6,7 @@ import {AssetNft} from "omnia-nft/AssetNft.sol";
 /**
  * @dev Defines a modifier for ownership verification of an asset.
  */
-contract OwnableAsset {
+abstract contract OwnableAsset {
     modifier onlyAssetOwner(AssetNft assetNft) {
         require(isAssetOwner(assetNft), "NOT_OWNER");
         _;

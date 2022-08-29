@@ -11,7 +11,7 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  *         Approving a sale request will lead to a deposit triggered by
  *         the Marketplace.
  */
-contract OfferApproval is OwnableAsset {
+abstract contract OfferApproval is OwnableAsset {
     event OfferApprovedAtFloorPrice(
         AssetNft indexed asset,
         Approval indexed approval
