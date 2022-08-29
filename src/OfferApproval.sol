@@ -18,7 +18,8 @@ contract OfferApproval is OwnableAsset {
     );
     event OfferApprovedAtCustomPrice(
         AssetNft indexed asset,
-        Approval indexed approval
+        Approval indexed approval,
+        uint256 indexed price
     );
 
     struct Approval {
@@ -81,5 +82,11 @@ contract OfferApproval is OwnableAsset {
         approvedOfferOf[asset].conditions = conditions;
         approvedOfferOf[asset].extras = extras;
         approvedOfferOf[asset].ownerSignature = true;
+
+        emit OfferApprovedAtCustomPrice(
+            asset,
+            approvedOfferOf[asset],
+            salePrice
+        );
     }
 }
