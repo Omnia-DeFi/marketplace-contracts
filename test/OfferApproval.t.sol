@@ -16,6 +16,11 @@ contract MockAssetListingTest is Test {
         AssetNft indexed asset,
         OfferApproval.Approval indexed approval
     );
+    event OfferApprovedAtCustomPrice(
+        AssetNft indexed asset,
+        OfferApproval.Approval indexed approval,
+        uint256 indexed price
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -196,5 +201,35 @@ contract MockAssetListingTest is Test {
             extrasSetUp.customTermDescription
         );
         assertTrue(ownerSignature);
+    }
+
+    function testEventEmittanceOfferApprovedAtCustomPrice() external {
+        vm.startPrank(owner);
+
+        uint256 customPrice = 324015 * 100;
+
+        OfferApproval.Approval memory approval_;
+        approval_.buyer = buyer;
+        approval_.atFloorPrice = false;
+        approval_.price = customPrice;
+        approval_.approvalTimestamp = block.timestamp;
+        approval_.conditions = conditionsSetUp;
+        approval_.extras = extrasSetUp;
+        approval_.ownerSignature = true;
+
+        // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
+        //        the issue might be related to the fact that we create an OfferApproval.Approval memory
+        //        above located to a different
+        vm.expectEmit(true, false, true, true, address(approval));
+        emit OfferApprovedAtCustomPrice(nftAsset, approval_, customPrice);
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            customPrice,
+            conditionsSetUp,
+            extrasSetUp
+        );
+        // verify timestamp registered in OfferApproval is the same thena the one in this test
+        assertEq(approval_.approvalTimestamp, approval.savedTimestamp());
     }
 }

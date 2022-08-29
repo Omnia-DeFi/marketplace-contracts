@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import {OfferApproval, AssetNft, SaleConditions} from "../../src/OfferApproval.sol";
 
 contract MockOfferApproval is OfferApproval {
+    uint256 public savedTimestamp;
+
     function approveSaleOfAtFloorPrice(
         AssetNft asset,
         address buyer,
@@ -11,6 +13,7 @@ contract MockOfferApproval is OfferApproval {
         SaleConditions.ExtraSaleTerms memory extras
     ) public {
         _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
+        savedTimestamp = block.timestamp;
     }
 
     function approveSaleOfAtCustomPrice(
@@ -27,5 +30,6 @@ contract MockOfferApproval is OfferApproval {
             conditions,
             extras
         );
+        savedTimestamp = block.timestamp;
     }
 }
