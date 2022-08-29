@@ -91,6 +91,33 @@ contract MockAssetListingTest is Test {
         );
     }
 
+    // Floor price or custom price offer, once one has been been approved no other offer
+    // can be approved.
+    function testOnlyOneOfferCanBeApprovedAtATime() external {
+        vm.startPrank(owner);
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+        vm.expectRevert("ALREADY_APPROVED");
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+        vm.expectRevert("ALREADY_APPROVED");
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            124901 * 100,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
+
     /*//////////////////////////////////////////////////////////////
 						  FLOOR PRICE
 	//////////////////////////////////////////////////////////////*/
