@@ -188,7 +188,7 @@ contract DepositTest is Test {
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
     }
 
-    function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20Only()
+    function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20OnlyAndVerifySavedValues()
         public
     {
         // Mints USDC to buyer
