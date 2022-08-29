@@ -177,8 +177,9 @@ contract MockAssetListingTest is Test {
             approval_.ownerSignature
         ) = approval.approvedOfferOf(nftAsset);
         // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
-        //        the issue might be related to the fact that we create an OfferApproval.Approval memory
-        //        above located to a different
+        //        the issue might be related to the fact that we create an
+        //        OfferApproval.Approval memory above which uses a different storage
+        //        location than the one emitted in the event
         vm.expectEmit(true, false, true, true, address(approval));
         emit OfferApprovedAtFloorPrice(nftAsset, approval_);
         approval.approveSaleOfAtFloorPrice(
@@ -248,8 +249,9 @@ contract MockAssetListingTest is Test {
         approval_.ownerSignature = true;
 
         // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
-        //        the issue might be related to the fact that we create an OfferApproval.Approval memory
-        //        above located to a different
+        //        the issue might be related to the fact that we create an
+        //        OfferApproval.Approval memory above which uses a different storage
+        //        location than the one emitted in the event
         vm.expectEmit(true, false, true, true, address(approval));
         emit OfferApprovedAtCustomPrice(nftAsset, approval_, customPrice);
         approval.approveSaleOfAtCustomPrice(
