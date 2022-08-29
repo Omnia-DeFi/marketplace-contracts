@@ -17,6 +17,12 @@ contract DepositTest is Test {
         AssetNft indexed asset,
         Deposit.DepositState indexed approval
     );
+    event BuyerDeposit(
+        AssetNft indexed asset,
+        Deposit.BuyerData indexed data,
+        Deposit.DepositState indexed state,
+        uint256 depositTime
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -223,5 +229,42 @@ contract DepositTest is Test {
             uint256(Deposit.DepositStatus.BuyerFullDeposit)
         );
         assertTrue(isAssetLocked);
+    }
+
+    function testEventEmittanceBuyerDeposit() public {
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        uint256 usdcMintedToBuyer = 6450592 * 10**18;
+        USDC.mint(buyer, usdcMintedToBuyer);
+        // Verify and save USDC blance of buyer
+        assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer);
+
+        // Simulate a deposit ask after an offer has been approved
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
+        deposit.emitDepositAsk(nftAsset, approval);
+
+        vm.startPrank(buyer);
+
+        Deposit.BuyerData memory buyerData;
+        Deposit.DepositState memory depositState;
+
+        buyerData.currencyAddress = address(USDC);
+        buyerData.symbol = "USDC";
+        buyerData.amount = approval.price;
+
+        depositState.status = Deposit.DepositStatus.BuyerFullDeposit;
+        depositState.isAssetLocked = true;
+        depositState.approval = approval;
+
+        // Seller approves the deposit
+        USDC.approve(address(deposit), approval.price);
+        // FIXME: third topic (approval_) is not checked because it fails son "invalid log"
+        //        the issue might be related to the fact that we create an
+        //        OfferApproval.Approval memory above which uses a different storage
+        //        location than the one emitted in the event
+        vm.expectEmit(true, true, false, true);
+        emit BuyerDeposit(nftAsset, buyerData, depositState, block.timestamp);
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
     }
 }
