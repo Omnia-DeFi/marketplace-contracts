@@ -142,4 +142,38 @@ contract DepositTest is Test {
         emit DepositAsked(nftAsset, depositState_);
         deposit.emitDepositAsk(nftAsset, approval);
     }
+
+    function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20Only()
+        public
+    {
+        // Mint USDC to buyer
+        // Verify and save USDC blance of buyer
+        // Verify USDC balance of deposit contract == 0
+
+        // Simulate a deposit ask after an offer has been approved
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
+        deposit.emitDepositAsk(nftAsset, approval);
+
+        deposit.buyerWholeDepositERC20(nftAsset);
+
+        Deposit.DepositedAssets memory assets;
+        (assets.currency, assets.shares) = deposit.depositedAssetsOf(nftAsset);
+
+        // assertEq(assets.currency.address, "USDC");
+        assertEq(assets.currency.symbol, "USDC");
+        assertEq(assets.currency.amount, approval.price);
+
+        // Verify USDC balance of deposit contract == assets.currency.amount
+        // Verify USDC balance of buyer == initialiBuyerBalance - assets.currency.amount
+
+        // Verify deposit state has been updated
+        (Deposit.DepositStatus depositStatus, , ) = deposit.depositStateOf(
+            nftAsset
+        );
+        assertEq(
+            uint256(depositStatus),
+            uint256(Deposit.DepositStatus.BuyerFullDeposit)
+        );
+    }
 }
