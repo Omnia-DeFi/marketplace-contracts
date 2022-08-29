@@ -73,5 +73,13 @@ contract OfferApproval is OwnableAsset {
         uint256 salePrice,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) internal onlyAssetOwner(asset) {}
+    ) internal onlyAssetOwner(asset) {
+        approvedOfferOf[asset].buyer = buyer;
+        approvedOfferOf[asset].atFloorPrice = false;
+        approvedOfferOf[asset].price = salePrice;
+        approvedOfferOf[asset].approvalTimestamp = block.timestamp;
+        approvedOfferOf[asset].conditions = conditions;
+        approvedOfferOf[asset].extras = extras;
+        approvedOfferOf[asset].ownerSignature = true;
+    }
 }
