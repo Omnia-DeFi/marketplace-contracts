@@ -52,16 +52,18 @@ contract MockAssetListingTest is Test {
         );
     }
 
-    function testOnlyOwnerCanApproveAnOffer() external {
+    function testOnlyOwnerCanApproveAnOfferAtFloorPrice() external {
         vm.startPrank(owner);
-        // at floor price
         approval.approveSaleOfAtFloorPrice(
             nftAsset,
             buyer,
             conditionsSetUp,
             extrasSetUp
         );
-        // custom price
+    }
+
+    function testOnlyOwnerCanApproveAnOfferAtCustomPrice() external {
+        vm.startPrank(owner);
         approval.approveSaleOfAtCustomPrice(
             nftAsset,
             buyer,
@@ -71,8 +73,7 @@ contract MockAssetListingTest is Test {
         );
     }
 
-    function testOfferApprvoalFailsOnNotOwner() external {
-        // at floor price
+    function testOfferApprovalAtFloorPriceFailsOnNotOwner() external {
         vm.expectRevert("NOT_OWNER");
         approval.approveSaleOfAtFloorPrice(
             nftAsset,
@@ -80,7 +81,9 @@ contract MockAssetListingTest is Test {
             conditionsSetUp,
             extrasSetUp
         );
-        // custom price
+    }
+
+    function testOfferApprovalAtCustomPriceFailsOnNotOwner() external {
         vm.expectRevert("NOT_OWNER");
         approval.approveSaleOfAtCustomPrice(
             nftAsset,
