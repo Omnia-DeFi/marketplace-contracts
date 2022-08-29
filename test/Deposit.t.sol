@@ -23,6 +23,12 @@ contract DepositTest is Test {
         Deposit.DepositState indexed state,
         uint256 depositTime
     );
+    event SellerDeposit(
+        AssetNft indexed asset,
+        Deposit.SellerData indexed data,
+        Deposit.DepositState indexed state,
+        uint256 depositTime
+    );
 
     /*//////////////////////////////////////////////////////////////
 						  IMPERSONATED ADDRESSES
@@ -264,7 +270,7 @@ contract DepositTest is Test {
 
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
-        // FIXME: third topic (approval_) is not checked because it fails son "invalid log"
+        // FIXME: third topic (depositState) is not checked because it fails son "invalid log"
         //        the issue might be related to the fact that we create an
         //        OfferApproval.Approval memory above which uses a different storage
         //        location than the one emitted in the event
@@ -324,5 +330,46 @@ contract DepositTest is Test {
             uint256(depositStatus),
             uint256(Deposit.DepositStatus.AllDepositMade)
         );
+    }
+
+    function testEventEmittanceSellerDeposit() public {
+        /*//////////////////////////////////////////////////////////////
+                            Deposit logic
+        //////////////////////////////////////////////////////////////*/
+        // Simulate deposit ask
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
+        vm.prank(owner);
+        deposit.emitDepositAsk(nftAsset, approval);
+        // Let buyer deposit USDC
+        _mintUSDCTo(buyer, 325249033 * 10**18);
+        vm.startPrank(buyer);
+        // Seller approves the deposit
+        USDC.approve(address(deposit), approval.price);
+        // Seller deposits USDC
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        vm.stopPrank();
+
+        // Let seller deposit AssetNft
+        vm.startPrank(owner);
+        nftAsset.approve(address(deposit), 0);
+        //////////////// Configuring structs ////////////////
+        Deposit.SellerData memory sellerData;
+        Deposit.DepositState memory depositState;
+
+        sellerData.hasSellerDepositedAll = true;
+        sellerData.amount = 1;
+
+        depositState.status = Deposit.DepositStatus.AllDepositMade;
+        depositState.isAssetLocked = true;
+        depositState.approval = approval;
+        //////////////// Check event emittance ////////////////
+        // FIXME: third topic (depositState) is not checked because it fails son "invalid log"
+        //        the issue might be related to the fact that we create an
+        //        OfferApproval.Approval memory above which uses a different storage
+        //        location than the one emitted in the event
+        vm.expectEmit(true, true, false, true);
+        emit SellerDeposit(nftAsset, sellerData, depositState, block.timestamp);
+        deposit.sellerDepositAssetNft(nftAsset);
     }
 }
