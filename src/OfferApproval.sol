@@ -28,7 +28,7 @@ contract OfferApproval is OwnableAsset {
         uint256 approvalTimestamp;
         SaleConditions.Conditions conditions;
         SaleConditions.ExtraSaleTerms extras;
-        bool ownerSignature; // TODO: add owner's signature
+        bool ownerSignature;
     }
 
     mapping(AssetNft => Approval) public approvedOfferOf;
@@ -41,7 +41,6 @@ contract OfferApproval is OwnableAsset {
      * @param buyer The buyer's address.
      * @param conditions Conditions of the sale for this asset.
      */
-    // TODO: pass owner's signature
     function _approveSaleOfAtFloorPrice(
         AssetNft asset,
         address buyer,
@@ -68,7 +67,6 @@ contract OfferApproval is OwnableAsset {
      * @param salePrice Price agreed off-chain by both parties.
      * @param conditions Conditions of the sale for this asset.
      */
-    // TODO: pass owner's signature
     function _approveSaleOfAtCustomPrice(
         AssetNft asset,
         address buyer,
