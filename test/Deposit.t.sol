@@ -90,6 +90,18 @@ contract DepositTest is Test {
         );
     }
 
+    function _mintUSDCTo(address to, uint256 amount) internal {
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        USDC.mint(to, amount);
+    }
+
+    // Verify mint function once and for all
+    function testMintUSDTo() public {
+        _mintUSDCTo(buyer, 100);
+        assertEq(USDC.balanceOf(buyer), 100);
+    }
+
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT ASK
     //////////////////////////////////////////////////////////////*/
@@ -159,12 +171,7 @@ contract DepositTest is Test {
                                  DEPOSIT FROM BUYER
     //////////////////////////////////////////////////////////////*/
     function testOnlyApprovedBuyerCanMakeDeposit() public {
-        // Owner mints USDC to buyer
-        vm.prank(owner);
-        uint256 usdcMintedToBuyer = 6450592 * 10**18;
-        USDC.mint(randomWallet, usdcMintedToBuyer);
-        // Verify and save USDC blance of buyer
-        assertEq(USDC.balanceOf(randomWallet), usdcMintedToBuyer);
+        _mintUSDCTo(randomWallet, 6450592 * 10**18);
 
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
@@ -184,12 +191,9 @@ contract DepositTest is Test {
     function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20Only()
         public
     {
-        // Owner mints USDC to buyer
-        vm.prank(owner);
+        // Mints USDC to buyer
         uint256 usdcMintedToBuyer = 6450592 * 10**18;
-        USDC.mint(buyer, usdcMintedToBuyer);
-        // Verify and save USDC blance of buyer
-        assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer);
+        _mintUSDCTo(buyer, usdcMintedToBuyer);
         // Verify USDC balance of deposit contract == 0
         assertEq(USDC.balanceOf(address(deposit)), 0);
 
@@ -238,12 +242,7 @@ contract DepositTest is Test {
     }
 
     function testEventEmittanceBuyerDeposit() public {
-        // Owner mints USDC to buyer
-        vm.prank(owner);
-        uint256 usdcMintedToBuyer = 6450592 * 10**18;
-        USDC.mint(buyer, usdcMintedToBuyer);
-        // Verify and save USDC blance of buyer
-        assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer);
+        _mintUSDCTo(buyer, 6450592 * 10**18);
 
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
