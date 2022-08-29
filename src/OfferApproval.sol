@@ -38,7 +38,7 @@ contract OfferApproval is OwnableAsset {
      * @notice Only approve an offer if there is none other approved.
      * @dev Checks that one or many parameters of struct Approval are not set.
      */
-    modifier onlyOneOfferApproval(AssetNft asset) {
+    modifier oneOfferApprovalPerAsset(AssetNft asset) {
         if (
             approvedOfferOf[asset].buyer != address(0) ||
             approvedOfferOf[asset].price != 0 ||
@@ -61,7 +61,7 @@ contract OfferApproval is OwnableAsset {
         address buyer,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) internal onlyAssetOwner(asset) onlyOneOfferApproval(asset) {
+    ) internal onlyAssetOwner(asset) oneOfferApprovalPerAsset(asset) {
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = true;
         approvedOfferOf[asset].price = conditions.floorPrice;
@@ -88,7 +88,7 @@ contract OfferApproval is OwnableAsset {
         uint256 salePrice,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) internal onlyAssetOwner(asset) onlyOneOfferApproval(asset) {
+    ) internal onlyAssetOwner(asset) oneOfferApprovalPerAsset(asset) {
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = false;
         approvedOfferOf[asset].price = salePrice;

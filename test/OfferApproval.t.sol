@@ -96,7 +96,7 @@ contract MockAssetListingTest is Test {
 
     // Floor price or custom price offer, once one has been been approved no other offer
     // can be approved.
-    function testOnlyOneOfferCanBeApprovedAtATime() external {
+    function testOnlyOneOfferApprovalPerAsset() external {
         vm.startPrank(owner);
         approval.approveSaleOfAtFloorPrice(
             nftAsset,
