@@ -17,10 +17,9 @@ import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 contract Deposit {
     event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
     event BuyerDeposit(
-        address buyer,
-        address indexed asset,
-        string indexed buyerData,
-        uint256 indexed amount,
+        AssetNft indexed asset,
+        BuyerData indexed data,
+        DepositState indexed state,
         uint256 depositTime
     );
     event SellerDeposit(AssetNft indexed asset, uint256 indexed depositTime);
@@ -108,5 +107,12 @@ contract Deposit {
         // Update status of the deposit & lock the asset
         depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;
         depositStateOf[asset].isAssetLocked = true;
+
+        emit BuyerDeposit(
+            asset,
+            depositedDataOf[asset].buyerData,
+            depositStateOf[asset],
+            block.timestamp
+        );
     }
 }
