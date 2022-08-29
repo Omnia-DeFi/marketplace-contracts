@@ -14,11 +14,7 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  *         The buyer has to deposit the whole amount of the asset offer.
  */
 contract Deposit {
-    event DepositAsked(
-        AssetNft indexed asset,
-        OfferApproval indexed approval,
-        SaleConditions indexed conditions
-    );
+    event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
     event BuyerDeposit(
         address buyer,
         address indexed asset,
@@ -59,6 +55,8 @@ contract Deposit {
         // yet. By default a bollean is false, so no need to update it to false.
         depositStateOf[asset].status = DepositStatus.Pending;
         depositStateOf[asset].approval = approval;
+
+        emit DepositAsked(asset, depositStateOf[asset]);
     }
 
     /**
