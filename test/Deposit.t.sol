@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import "../src/libraries/ListingLib.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
+import {MockUSDC} from "./mock/MockUSDC.sol";
 import {MockDeposit, Deposit, AssetNft, SaleConditions, OfferApproval} from "./mock/MockDeposit.sol";
 import {MockOfferApproval} from "./mock/MockOfferApproval.sol";
 
@@ -22,6 +23,7 @@ contract DepositTest is Test {
 	//////////////////////////////////////////////////////////////*/
     AssetNft public nftAsset;
     MockMarketplace public marketplace;
+    MockUSDC public immutable USDC = new MockUSDC();
     MockDeposit public deposit;
     MockOfferApproval public offerApproval;
 
@@ -146,9 +148,14 @@ contract DepositTest is Test {
     function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20Only()
         public
     {
-        // Mint USDC to buyer
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        uint256 usdcMintedToBuyer = 6450592 * 10**18;
+        USDC.mint(buyer, usdcMintedToBuyer);
         // Verify and save USDC blance of buyer
+        assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer);
         // Verify USDC balance of deposit contract == 0
+        assertEq(USDC.balanceOf(address(deposit)), 0);
 
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
