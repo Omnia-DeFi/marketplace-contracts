@@ -14,6 +14,8 @@ import {OwnableAsset} from "./OwnableAsset.sol";
  *         The buyer has to deposit the whole amount of the asset offer.
  */
 contract Deposit {
+    address constant USDC = address(0x0);
+
     event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
     event BuyerDeposit(
         address buyer,
@@ -37,7 +39,23 @@ contract Deposit {
         OfferApproval.Approval approval;
     }
 
+    struct Currency {
+        // IERC20 address;
+        string symbol;
+        uint256 amount;
+    }
+    struct AssetShares {
+        AssetNft asset;
+        uint256 amount;
+    }
+
+    struct DepositedAssets {
+        Currency currency;
+        AssetShares shares;
+    }
+
     mapping(AssetNft => DepositState) public depositStateOf;
+    mapping(AssetNft => DepositedAssets) public depositedAssetsOf;
 
     /**
      * @notice Ask both parties engaged in the sale to deposit their
@@ -60,27 +78,19 @@ contract Deposit {
     }
 
     /**
-     * @notice Whole deposit on both sides to consumme the sale.
-     * @dev Parameters, see `emitDepositAsk()`.
-     *      If `msg.sender`is the buyer only deposit the asset offer
-     *      price minus the deposit (if any).
-     *      If  `msg.sender`is the seller, desposit the NFTs
+     * @notice Whole deposit from buyer according to the price agreed in OfferApproval,
+     *         only using ERC20 tokens.``
+     * @dev Transfer ERC20 from msg.sender (buyer) to this deposit contract.
+     *      For the first version we will asume only USDC will be used.
      */
-    function _wholeDeposit(
-        AssetNft asset,
-        OfferApproval approval,
-        SaleConditions conditions
-    ) internal {}
+    function _buyerWholeDepositERC20(AssetNft asset) internal {
+        uint256 transferAmount = depositStateOf[asset].approval.price;
 
-    /**
-     * @notice Inform about the curent state of the deposit.
-     * @dev Parameters, see `emitDepositAsk()`.
-     * @return DepositState enum, representing the current state of the deposit mentionning
-     *         which party has already deposited and if the asset is locked for the buyer.
-     */
-    function _depositState(
-        AssetNft asset,
-        OfferApproval approval,
-        SaleConditions conditions
-    ) internal view returns (DepositState memory) {}
+        // IERC20(USDCaddr).transferFrom(msg.sender, this, transferAmount);
+
+        depositedAssetsOf[asset].currency.symbol = "USDC";
+        depositedAssetsOf[asset].currency.amount = transferAmount;
+
+        depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;
+    }
 }
