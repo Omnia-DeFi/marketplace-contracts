@@ -11,7 +11,7 @@ contract MockDeposit is Deposit {
         _emitDepositAsk(asset, approval);
     }
 
-    function buyerWholeDepositERC20(AssetNft asset) public {
-        _buyerWholeDepositERC20(asset);
+    function buyerWholeDepositERC20(AssetNft asset, address erc20) public {
+        _buyerWholeDepositERC20(asset, erc20);
     }
 }

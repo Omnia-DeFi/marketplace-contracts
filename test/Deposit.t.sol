@@ -162,7 +162,17 @@ contract DepositTest is Test {
             memory approval = _createOfferApprovalWithCustomPrice();
         deposit.emitDepositAsk(nftAsset, approval);
 
-        deposit.buyerWholeDepositERC20(nftAsset);
+        /*//////////////////////////////////////////////////////////////
+						        BUYER ACTIONS
+	    //////////////////////////////////////////////////////////////*/
+        vm.startPrank(buyer);
+
+        // Seller approves the deposit
+        USDC.approve(address(deposit), approval.price);
+        // Seller deposits USDC
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+
+        vm.stopPrank();
 
         /*//////////////////////////////////////////////////////////////
 						        RESULTS VERIFICATION
@@ -172,20 +182,22 @@ contract DepositTest is Test {
             nftAsset
         );
 
-        // assertEq(assets.currency.address, "USDC");
+        assertEq(assets.buyerData.currencyAddress, address(USDC));
         assertEq(assets.buyerData.symbol, "USDC");
         assertEq(assets.buyerData.amount, approval.price);
 
-        // Verify USDC balance of deposit contract == assets.currency.amount
-        // Verify USDC balance of buyer == initialiBuyerBalance - assets.currency.amount
+        // Verify USDC balance of deposit contract == assets.buyerData.amount
+        assertEq(USDC.balanceOf(address(deposit)), approval.price);
+        // Verify USDC balance of buyer == initialiBuyerBalance - assets.buyerData.amount
+        assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer - approval.price);
 
         // Verify deposit state has been updated
-        (Deposit.DepositStatus depositStatus, , ) = deposit.depositStateOf(
-            nftAsset
-        );
+        (Deposit.DepositStatus depositStatus, bool isAssetLocked, ) = deposit
+            .depositStateOf(nftAsset);
         assertEq(
             uint256(depositStatus),
             uint256(Deposit.DepositStatus.BuyerFullDeposit)
         );
+        assertTrue(isAssetLocked);
     }
 }
