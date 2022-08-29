@@ -57,6 +57,17 @@ contract Deposit {
     mapping(AssetNft => DepositState) public depositStateOf;
     mapping(AssetNft => DepositData) public depositedDataOf;
 
+    /** @dev The buyer (msg.sender) must be the one approved by the seller in
+     *        OfferApproval.Approval.
+     */
+    modifier onlyApprovedBuyer(AssetNft asset) {
+        require(
+            msg.sender == depositStateOf[asset].approval.buyer,
+            "BUYER_NOT_APPROVED"
+        );
+        _;
+    }
+
     /**
      * @notice Ask both parties engaged in the sale to deposit their
      *         due, starting with the buyer.
@@ -83,7 +94,10 @@ contract Deposit {
      * @dev Transfer ERC20 from msg.sender (buyer) to this deposit contract.
      *      For the first version we will asume only USDC will be used.
      */
-    function _buyerWholeDepositERC20(AssetNft asset, address erc20) internal {
+    function _buyerWholeDepositERC20(AssetNft asset, address erc20)
+        internal
+        onlyApprovedBuyer(asset)
+    {
         uint256 transferAmount = depositStateOf[asset].approval.price;
 
         IERC20(erc20).transferFrom(msg.sender, address(this), transferAmount);
