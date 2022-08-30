@@ -31,12 +31,11 @@ contract Marketplace is AssetListing, SaleConditions {
     /// @dev USD price only has 2 decimals.
     uint256 public constant FIAT_PRICE_DECIMAL = 10**2;
 
-    /*//////////////////////////////////////////////////////////////
-                                 PRICING LOGIC
-    //////////////////////////////////////////////////////////////*/
-    mapping(string => address) public supportedCurrenciesAddress;
-    mapping(address => string) public supportedCurrenciesTicker;
-
+    /**
+     * @notice List an asset for sale on the marketplace with compulsory sale conditions
+     *         and optional extra sale terms.
+     * @dev Merge `AssetListing` & `SaleConditions` logic.
+     */
     function listAssetWithSaleConditions(
         AssetNft asset,
         SaleConditions.Conditions memory conditions,
