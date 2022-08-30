@@ -115,16 +115,17 @@ abstract contract Deposit is ERC721TokenReceiver {
      * @dev Transfer ERC20 from msg.sender (buyer) to this deposit contract.
      *      For the first version we will asume only USDC will be used.
      */
-    function _buyerWholeDepositERC20(AssetNft asset, address erc20)
-        internal
-        onlyApprovedBuyer(asset)
-    {
+    function _buyerWholeDepositERC20(
+        AssetNft asset,
+        address erc20,
+        string memory erc20Label
+    ) internal onlyApprovedBuyer(asset) {
         uint256 transferAmount = depositStateOf[asset].approval.price;
 
         IERC20(erc20).transferFrom(msg.sender, address(this), transferAmount);
 
         depositedDataOf[asset].buyerData.currencyAddress = erc20;
-        depositedDataOf[asset].buyerData.symbol = "USDC";
+        depositedDataOf[asset].buyerData.symbol = erc20Label;
         depositedDataOf[asset].buyerData.amount = transferAmount;
         // Update status of the deposit & lock the asset
         depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;

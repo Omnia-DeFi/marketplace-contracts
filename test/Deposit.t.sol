@@ -192,7 +192,7 @@ contract DepositTest is Test {
 
         // Deposit fails as `randomWallet` is not approved, only `buyer` is
         vm.expectRevert("BUYER_NOT_APPROVED");
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
     }
 
     function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20OnlyAndVerifySavedValues()
@@ -217,7 +217,7 @@ contract DepositTest is Test {
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
         // Seller deposits USDC
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
 
         vm.stopPrank();
 
@@ -277,7 +277,7 @@ contract DepositTest is Test {
         //        location than the one emitted in the event
         vm.expectEmit(true, true, false, true);
         emit BuyerDeposit(nftAsset, buyerData, depositState, block.timestamp);
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -305,7 +305,7 @@ contract DepositTest is Test {
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
         // Seller deposits USDC
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
         vm.stopPrank();
 
         /*//////////////////////////////////////////////////////////////
@@ -349,7 +349,7 @@ contract DepositTest is Test {
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
         // Seller deposits USDC
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
         vm.stopPrank();
 
         // Let seller deposit AssetNft
@@ -395,7 +395,7 @@ contract DepositTest is Test {
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
         // Seller deposits USDC
-        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
         vm.stopPrank();
         // Let seller deposit AssetNft
         vm.startPrank(owner);
