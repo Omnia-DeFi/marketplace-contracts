@@ -15,18 +15,16 @@ contract DepositTest is Test {
     //////////////////////////////////////////////////////////////*/
     event DepositAsked(
         AssetNft indexed asset,
-        Deposit.DepositState indexed approval
+        Deposit.ApprovalResume indexed approval
     );
     event BuyerDeposit(
         AssetNft indexed asset,
-        Deposit.BuyerData indexed data,
-        Deposit.DepositState indexed state,
+        Deposit.DepositData indexed data,
         uint256 depositTime
     );
     event SellerDeposit(
         AssetNft indexed asset,
-        Deposit.SellerData indexed data,
-        Deposit.DepositState indexed state,
+        Deposit.DepositData indexed data,
         uint256 depositTime
     );
 
@@ -122,55 +120,39 @@ contract DepositTest is Test {
 
         // fetch saved data
         (
-            Deposit.DepositStatus savedStatus,
-            bool savedLockStatus,
-            OfferApproval.Approval memory savedApproval
-        ) = deposit.depositStateOf(nftAsset);
+            Deposit.DepositState memory savedState,
+            Deposit.ApprovalResume memory savedApproval,
+            ,
+
+        ) = deposit.depositedDataOf(nftAsset);
 
         // Foundry doesn't support enum comparison, only integer comparison.
-        assertEq(uint256(savedStatus), uint256(Deposit.DepositStatus.Pending));
-        assertFalse(savedLockStatus);
+        assertEq(
+            uint256(savedState.status),
+            uint256(Deposit.DepositStatus.Pending)
+        );
+        assertFalse(savedState.isAssetLocked);
         // Compare struct Approval field by field as Foundry doesn't support direct
         // comparison.
+        assertEq(savedApproval.seller, approval.seller);
         assertEq(savedApproval.buyer, approval.buyer);
-        assertEq(savedApproval.atFloorPrice, approval.atFloorPrice);
         assertEq(savedApproval.price, approval.price);
-        assertEq(savedApproval.approvalTimestamp, approval.approvalTimestamp);
-        // struct Conditions comparison
-        assertEq(
-            savedApproval.conditions.floorPrice,
-            approval.conditions.floorPrice
-        );
-        assertEq(
-            savedApproval.conditions.paymentTerms.consummationSaleTimeframe,
-            approval.conditions.paymentTerms.consummationSaleTimeframe
-        );
-        // struct ExtraSaleTerms comparison
-        assertEq(savedApproval.extras.label, approval.extras.label);
-        assertEq(
-            savedApproval.extras.customTermDescription,
-            approval.extras.customTermDescription
-        );
     }
 
     function testEventEmittanceDepositAsked() public {
-        OfferApproval.Approval memory approval;
-        Deposit.DepositState memory depositState_;
-        approval = _createOfferApprovalWithCustomPrice();
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
 
         deposit.emitDepositAsk(nftAsset, approval);
         (
-            depositState_.status,
-            depositState_.isAssetLocked,
-            depositState_.approval
-        ) = deposit.depositStateOf(nftAsset);
+            Deposit.DepositState memory savedState,
+            Deposit.ApprovalResume memory savedApproval,
+            ,
 
-        // FIXME: second topic (depositState_) is not checked because it fails on
-        // "invalid log". The issue might be related to the fact that we create a
-        // Deposit.DepositState memory above located to a different storage location than
-        // the one emitted in the event
-        vm.expectEmit(true, false, true, true);
-        emit DepositAsked(nftAsset, depositState_);
+        ) = deposit.depositedDataOf(nftAsset);
+
+        vm.expectEmit(true, true, true, true);
+        emit DepositAsked(nftAsset, savedApproval);
         deposit.emitDepositAsk(nftAsset, approval);
     }
 
@@ -224,14 +206,12 @@ contract DepositTest is Test {
         /*//////////////////////////////////////////////////////////////
 						        RESULTS VERIFICATION
 	    //////////////////////////////////////////////////////////////*/
-        Deposit.DepositData memory assets;
-        (assets.buyerData, assets.sellerData) = deposit.depositedDataOf(
-            nftAsset
-        );
+        Deposit.BuyerData memory buyerData;
+        (, , buyerData, ) = deposit.depositedDataOf(nftAsset);
 
-        assertEq(assets.buyerData.currencyAddress, address(USDC));
-        assertEq(assets.buyerData.symbol, "USDC");
-        assertEq(assets.buyerData.amount, approval.price);
+        assertEq(buyerData.currencyAddress, address(USDC));
+        assertEq(buyerData.symbol, "USDC");
+        assertEq(buyerData.amount, approval.price);
 
         // Verify USDC balance of deposit contract == assets.buyerData.amount
         assertEq(USDC.balanceOf(address(deposit)), approval.price);
@@ -239,13 +219,17 @@ contract DepositTest is Test {
         assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer - approval.price);
 
         // Verify deposit state has been updated
-        (Deposit.DepositStatus depositStatus, bool isAssetLocked, ) = deposit
-            .depositStateOf(nftAsset);
+        (
+            Deposit.DepositState memory savedState,
+            Deposit.ApprovalResume memory savedApproval,
+            ,
+
+        ) = deposit.depositedDataOf(nftAsset);
         assertEq(
-            uint256(depositStatus),
+            uint256(savedState.status),
             uint256(Deposit.DepositStatus.BuyerFullDeposit)
         );
-        assertTrue(isAssetLocked);
+        assertTrue(savedState.isAssetLocked);
     }
 
     function testEventEmittanceBuyerDeposit() public {
@@ -258,25 +242,23 @@ contract DepositTest is Test {
 
         vm.startPrank(buyer);
 
-        Deposit.BuyerData memory buyerData;
-        Deposit.DepositState memory depositState;
+        Deposit.DepositData memory depositData;
 
-        buyerData.currencyAddress = address(USDC);
-        buyerData.symbol = "USDC";
-        buyerData.amount = approval.price;
+        depositData.approval.seller = approval.seller;
+        depositData.approval.buyer = approval.buyer;
+        depositData.approval.price = approval.price;
 
-        depositState.status = Deposit.DepositStatus.BuyerFullDeposit;
-        depositState.isAssetLocked = true;
-        depositState.approval = approval;
+        depositData.buyerData.currencyAddress = address(USDC);
+        depositData.buyerData.symbol = "USDC";
+        depositData.buyerData.amount = approval.price;
+
+        depositData.state.status = Deposit.DepositStatus.BuyerFullDeposit;
+        depositData.state.isAssetLocked = true;
 
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
-        // FIXME: third topic (depositState) is not checked because it fails son "invalid log"
-        //        the issue might be related to the fact that we create an
-        //        OfferApproval.Approval memory above which uses a different storage
-        //        location than the one emitted in the event
-        vm.expectEmit(true, true, false, true);
-        emit BuyerDeposit(nftAsset, buyerData, depositState, block.timestamp);
+        vm.expectEmit(true, true, true, true);
+        emit BuyerDeposit(nftAsset, depositData, block.timestamp);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
     }
 
@@ -318,18 +300,17 @@ contract DepositTest is Test {
         assertEq(nftAsset.balanceOf(address(deposit)), 1);
 
         // Verify DepositData update
-        (, Deposit.SellerData memory sellerData) = deposit.depositedDataOf(
+        (, , , Deposit.SellerData memory sellerData) = deposit.depositedDataOf(
             nftAsset
         );
         assertTrue(sellerData.hasSellerDepositedAll);
         assertEq(sellerData.amount, 1);
 
         // Verify DepositState update
-        (Deposit.DepositStatus depositStatus, , ) = deposit.depositStateOf(
-            nftAsset
-        );
+        (Deposit.DepositState memory depositState, , , ) = deposit
+            .depositedDataOf(nftAsset);
         assertEq(
-            uint256(depositStatus),
+            uint256(depositState.status),
             uint256(Deposit.DepositStatus.AllDepositMade)
         );
     }
@@ -356,22 +337,24 @@ contract DepositTest is Test {
         vm.startPrank(owner);
         nftAsset.approve(address(deposit), 0);
         //////////////// Configuring structs ////////////////
-        Deposit.SellerData memory sellerData;
-        Deposit.DepositState memory depositState;
+        Deposit.DepositData memory depositData;
 
-        sellerData.hasSellerDepositedAll = true;
-        sellerData.amount = 1;
+        depositData.state.status = Deposit.DepositStatus.AllDepositMade;
+        depositData.state.isAssetLocked = true;
 
-        depositState.status = Deposit.DepositStatus.AllDepositMade;
-        depositState.isAssetLocked = true;
-        depositState.approval = approval;
+        depositData.approval.seller = approval.seller;
+        depositData.approval.buyer = approval.buyer;
+        depositData.approval.price = approval.price;
+
+        depositData.buyerData.currencyAddress = address(USDC);
+        depositData.buyerData.symbol = "USDC";
+        depositData.buyerData.amount = approval.price;
+
+        depositData.sellerData.hasSellerDepositedAll = true;
+        depositData.sellerData.amount = 1;
         //////////////// Check event emittance ////////////////
-        // FIXME: third topic (depositState) is not checked because it fails son "invalid log"
-        //        the issue might be related to the fact that we create an
-        //        OfferApproval.Approval memory above which uses a different storage
-        //        location than the one emitted in the event
-        vm.expectEmit(true, true, false, true);
-        emit SellerDeposit(nftAsset, sellerData, depositState, block.timestamp);
+        vm.expectEmit(true, true, true, true);
+        emit SellerDeposit(nftAsset, depositData, block.timestamp);
         deposit.sellerDepositAssetNft(nftAsset);
     }
 
