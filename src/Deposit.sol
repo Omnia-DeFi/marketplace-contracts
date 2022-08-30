@@ -152,4 +152,26 @@ abstract contract Deposit is ERC721TokenReceiver {
             block.timestamp
         );
     }
+
+    /**
+     * @notice Once all deposit made and SaleConditions are still met, we swap the assets:
+     *         - Buyer receives the `AssetNft`
+     *         - Seller receives the `ERC20`
+     * @param asset The listed `AssetNft` with an `OfferApproval` linked, that the buyer
+     *              will receive.
+     */
+    function _swapAssets(AssetNft asset) internal allDepositMade(asset) {
+        // transfer AssetNft from this contract to the buyer
+        asset.safeTransferFrom(
+            address(this),
+            depositStateOf[asset].approval.buyer,
+            0
+        );
+
+        // transfer ERC20 from this contract to the seller
+        IERC20(depositedDataOf[asset].buyerData.currencyAddress).transfer(
+            depositStateOf[asset].approval.seller,
+            depositedDataOf[asset].buyerData.amount
+        );
+    }
 }
