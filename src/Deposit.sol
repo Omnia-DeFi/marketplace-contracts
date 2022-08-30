@@ -81,6 +81,14 @@ abstract contract Deposit is ERC721TokenReceiver {
         _;
     }
 
+    modifier allDepositMade(AssetNft asset) {
+        require(
+            depositStateOf[asset].status == DepositStatus.AllDepositMade,
+            "MISSING_DEPOSIT"
+        );
+        _;
+    }
+
     /**
      * @notice Ask both parties engaged in the sale to deposit their
      *         due, starting with the buyer.
