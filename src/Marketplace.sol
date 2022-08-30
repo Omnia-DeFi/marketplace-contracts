@@ -4,6 +4,8 @@ pragma solidity ^0.8.13;
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {AssetListing} from "./AssetListing.sol";
 import {SaleConditions} from "./SaleConditions.sol";
+import {OfferApproval} from "./OfferApproval.sol";
+import {Deposit} from "./Deposit.sol";
 
 /**
  * @notice Marketplace is the orchestrator contract. It is responsible
@@ -16,6 +18,13 @@ import {SaleConditions} from "./SaleConditions.sol";
  *      Deposit & SaleConsummation contracts together.
  */
 contract Marketplace is AssetListing, SaleConditions {
+    event SaleConsummated(
+        address indexed asset,
+        address indexed buyer,
+        SaleConditions indexed conditions,
+        Deposit deposit
+    );
+
     /*//////////////////////////////////////////////////////////////
                                  CONSTANTS
     //////////////////////////////////////////////////////////////*/
@@ -36,4 +45,24 @@ contract Marketplace is AssetListing, SaleConditions {
         _listAsset(asset);
         _setSaleConditions(asset, conditions, extras);
     }
+
+    /**
+     * @notice Once all sale conditions are met, the sale of the asset is
+     *         consummated and the swap is instantly made. Each side wil
+     *         receive their respective assets.
+     *
+     * @param asset The asset to be consummated.
+     * @param buyer The buyer of the asset.
+     * @param conditions The sale conditions of the asset.
+     * @param deposit The deposit contractcontaing the currency and the
+     *                NFTs.
+     *
+     * @return Sale consummation success or failure.
+     */
+    function consummateSale(
+        address asset,
+        address buyer,
+        SaleConditions conditions,
+        Deposit deposit
+    ) external returns (bool) {}
 }
