@@ -16,17 +16,15 @@ import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
  *         The buyer has to deposit the whole amount of the asset offer.
  */
 abstract contract Deposit is ERC721TokenReceiver {
-    event DepositAsked(AssetNft indexed asset, DepositState indexed approval);
+    event DepositAsked(AssetNft indexed asset, ApprovalResume indexed approval);
     event BuyerDeposit(
         AssetNft indexed asset,
-        BuyerData indexed data,
-        DepositState indexed state,
+        Deposit.DepositData indexed data,
         uint256 depositTime
     );
     event SellerDeposit(
         AssetNft indexed asset,
-        SellerData indexed data,
-        DepositState indexed state,
+        Deposit.DepositData indexed data,
         uint256 depositTime
     );
 
@@ -38,10 +36,15 @@ abstract contract Deposit is ERC721TokenReceiver {
         AllDepositMade
     }
 
+    struct ApprovalResume {
+        address seller;
+        address buyer;
+        uint256 price;
+    }
+
     struct DepositState {
         DepositStatus status;
         bool isAssetLocked;
-        OfferApproval.Approval approval;
     }
 
     struct BuyerData {
@@ -55,11 +58,12 @@ abstract contract Deposit is ERC721TokenReceiver {
     }
 
     struct DepositData {
+        DepositState state;
+        ApprovalResume approval;
         BuyerData buyerData;
         SellerData sellerData;
     }
 
-    mapping(AssetNft => DepositState) public depositStateOf;
     mapping(AssetNft => DepositData) public depositedDataOf;
 
     /** @dev The buyer (msg.sender) must be the one approved by the seller in
@@ -67,7 +71,7 @@ abstract contract Deposit is ERC721TokenReceiver {
      */
     modifier onlyApprovedBuyer(AssetNft asset) {
         require(
-            msg.sender == depositStateOf[asset].approval.buyer,
+            msg.sender == depositedDataOf[asset].approval.buyer,
             "BUYER_NOT_APPROVED"
         );
         _;
@@ -75,7 +79,8 @@ abstract contract Deposit is ERC721TokenReceiver {
 
     modifier buyerDepositFirst(AssetNft asset) {
         require(
-            depositStateOf[asset].status == DepositStatus.BuyerFullDeposit,
+            depositedDataOf[asset].state.status ==
+                DepositStatus.BuyerFullDeposit,
             "BUYER_DEPOSIT_FIRST"
         );
         _;
@@ -83,7 +88,7 @@ abstract contract Deposit is ERC721TokenReceiver {
 
     modifier allDepositMade(AssetNft asset) {
         require(
-            depositStateOf[asset].status == DepositStatus.AllDepositMade,
+            depositedDataOf[asset].state.status == DepositStatus.AllDepositMade,
             "MISSING_DEPOSIT"
         );
         _;
@@ -103,10 +108,12 @@ abstract contract Deposit is ERC721TokenReceiver {
     ) internal {
         // Update status and approval. Asset is not locked as not deposit has beeen made
         // yet. By default a bollean is false, so no need to update it to false.
-        depositStateOf[asset].status = DepositStatus.Pending;
-        depositStateOf[asset].approval = approval;
+        depositedDataOf[asset].state.status = DepositStatus.Pending;
+        depositedDataOf[asset].approval.seller = approval.seller;
+        depositedDataOf[asset].approval.buyer = approval.buyer;
+        depositedDataOf[asset].approval.price = approval.price;
 
-        emit DepositAsked(asset, depositStateOf[asset]);
+        emit DepositAsked(asset, depositedDataOf[asset].approval);
     }
 
     /**
@@ -120,7 +127,7 @@ abstract contract Deposit is ERC721TokenReceiver {
         address erc20,
         string memory erc20Label
     ) internal onlyApprovedBuyer(asset) {
-        uint256 transferAmount = depositStateOf[asset].approval.price;
+        uint256 transferAmount = depositedDataOf[asset].approval.price;
 
         IERC20(erc20).transferFrom(msg.sender, address(this), transferAmount);
 
@@ -128,15 +135,10 @@ abstract contract Deposit is ERC721TokenReceiver {
         depositedDataOf[asset].buyerData.symbol = erc20Label;
         depositedDataOf[asset].buyerData.amount = transferAmount;
         // Update status of the deposit & lock the asset
-        depositStateOf[asset].status = DepositStatus.BuyerFullDeposit;
-        depositStateOf[asset].isAssetLocked = true;
+        depositedDataOf[asset].state.status = DepositStatus.BuyerFullDeposit;
+        depositedDataOf[asset].state.isAssetLocked = true;
 
-        emit BuyerDeposit(
-            asset,
-            depositedDataOf[asset].buyerData,
-            depositStateOf[asset],
-            block.timestamp
-        );
+        emit BuyerDeposit(asset, depositedDataOf[asset], block.timestamp);
     }
 
     /**
@@ -152,14 +154,9 @@ abstract contract Deposit is ERC721TokenReceiver {
         depositedDataOf[asset].sellerData.hasSellerDepositedAll = true;
         depositedDataOf[asset].sellerData.amount = 1;
 
-        depositStateOf[asset].status = DepositStatus.AllDepositMade;
+        depositedDataOf[asset].state.status = DepositStatus.AllDepositMade;
 
-        emit SellerDeposit(
-            asset,
-            depositedDataOf[asset].sellerData,
-            depositStateOf[asset],
-            block.timestamp
-        );
+        emit SellerDeposit(asset, depositedDataOf[asset], block.timestamp);
     }
 
     /**
@@ -173,13 +170,13 @@ abstract contract Deposit is ERC721TokenReceiver {
         // transfer AssetNft from this contract to the buyer
         asset.safeTransferFrom(
             address(this),
-            depositStateOf[asset].approval.buyer,
+            depositedDataOf[asset].approval.buyer,
             0
         );
 
         // transfer ERC20 from this contract to the seller
         IERC20(depositedDataOf[asset].buyerData.currencyAddress).transfer(
-            depositStateOf[asset].approval.seller,
+            depositedDataOf[asset].approval.seller,
             depositedDataOf[asset].buyerData.amount
         );
     }
