@@ -90,4 +90,24 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
         _emitDepositAsk(asset, approvedOfferOf[asset]);
     }
+
+    /**
+     * @notice Overload `approveSale` with custom price.
+     */
+    function approveSale(
+        AssetNft asset,
+        address buyer,
+        uint256 salePrice,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) external onlyListedAsset(asset) {
+        _approveSaleOfAtCustomPrice(
+            asset,
+            buyer,
+            salePrice,
+            conditions,
+            extras
+        );
+        _emitDepositAsk(asset, approvedOfferOf[asset]);
+    }
 }
