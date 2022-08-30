@@ -145,4 +145,69 @@ contract MarketplaceTest is Test {
         assertEq(approval.buyer, alice);
         assertEq(approval.price, conditionsSetUp.floorPrice);
     }
+
+    function testApproveSaleAtCustomPrice() public {
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        uint256 customPrice = 2590325 * 10**18;
+        marketplace.approveSale(
+            assetNft,
+            alice,
+            customPrice,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        ////////////////// Verify OfferAproval values //////////////////
+        (
+            address seller,
+            address buyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = marketplace.approvedOfferOf(assetNft);
+        assertEq(seller, owner);
+        assertEq(buyer, alice);
+        assertFalse(atFloorPrice);
+        // Price of the offer is not the floor price of the asset
+        assertFalse(price == conditions.floorPrice);
+        assertEq(price, customPrice);
+        assertEq(approvalTimestamp, block.timestamp);
+        // SaleConditions.Conditions checks
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        // SaleConditions.ExtraSaleTerms checks
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
+
+        ////////////////// Verify Deposit values //////////////////
+        (
+            Deposit.DepositState memory state,
+            Deposit.ApprovalResume memory approval,
+            ,
+
+        ) = marketplace.depositedDataOf(assetNft);
+        // Deposit.DepositState checks
+        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
+        assertFalse(state.isAssetLocked);
+        // Deposit.ApprovalResume checks
+        assertEq(approval.seller, owner);
+        assertEq(approval.buyer, alice);
+        assertEq(approval.price, customPrice);
+    }
 }
