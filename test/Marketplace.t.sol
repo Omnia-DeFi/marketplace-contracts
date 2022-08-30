@@ -3,10 +3,8 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../src/Marketplace.sol";
-import "../src/AssetListing.sol";
-import "../src/SaleConditions.sol";
-import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
+import {Marketplace, AssetNft, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
+import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -81,10 +79,70 @@ contract MarketplaceTest is Test {
             conditionsSetUp,
             extrasSetUp
         );
+
+        ////////////////// Verify AssetListing values //////////////////
+
+        ////////////////// Verify SaleConditions values //////////////////
     }
 
-    function testApproveSaleAtFloorPriceOnlyIfAssetListed() public {
+    function testApproveSaleAtFloorPriceFailsOnAssetNotListed() public {
         vm.expectRevert("ASSET_NOT_LISTED");
         marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+    }
+
+    function testApproveSaleAtFloorPrice() public {
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+
+        ////////////////// Verify OfferAproval values //////////////////
+        (
+            address seller,
+            address buyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = marketplace.approvedOfferOf(assetNft);
+        assertEq(seller, owner);
+        assertEq(buyer, alice);
+        assertTrue(atFloorPrice);
+        assertEq(price, conditionsSetUp.floorPrice);
+        assertEq(approvalTimestamp, block.timestamp);
+        // SaleConditions.Conditions checks
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        // SaleConditions.ExtraSaleTerms checks
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
+
+        ////////////////// Verify Deposit values //////////////////
+        (
+            Deposit.DepositState memory state,
+            Deposit.ApprovalResume memory approval,
+            ,
+
+        ) = marketplace.depositedDataOf(assetNft);
+        // Deposit.DepositState checks
+        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
+        assertFalse(state.isAssetLocked);
+        // Deposit.ApprovalResume checks
+        assertEq(approval.seller, owner);
+        assertEq(approval.buyer, alice);
+        assertEq(approval.price, conditionsSetUp.floorPrice);
     }
 }
