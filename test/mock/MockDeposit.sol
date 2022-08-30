@@ -18,4 +18,8 @@ contract MockDeposit is Deposit {
     function sellerDepositAssetNft(AssetNft asset) public {
         _sellerDepositAssetNft(asset);
     }
+
+    function swapAssets(AssetNft asset) public {
+        _swapAssets(asset);
+    }
 }

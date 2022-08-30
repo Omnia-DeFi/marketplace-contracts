@@ -373,4 +373,39 @@ contract DepositTest is Test {
         emit SellerDeposit(nftAsset, sellerData, depositState, block.timestamp);
         deposit.sellerDepositAssetNft(nftAsset);
     }
+
+    function testSwapAssets() public {
+        //////////////// Deposit logic ////////////////
+        // Simulate deposit ask
+        OfferApproval.Approval
+            memory approval = _createOfferApprovalWithCustomPrice();
+        vm.prank(owner);
+        deposit.emitDepositAsk(nftAsset, approval);
+        // Let buyer deposit USDC
+        _mintUSDCTo(buyer, 325249033 * 10**18);
+        vm.startPrank(buyer);
+        // Seller approves the deposit
+        USDC.approve(address(deposit), approval.price);
+        // Seller deposits USDC
+        deposit.buyerWholeDepositERC20(nftAsset, address(USDC));
+        vm.stopPrank();
+        // Let seller deposit AssetNft
+        vm.startPrank(owner);
+        nftAsset.approve(address(deposit), 0);
+        deposit.sellerDepositAssetNft(nftAsset);
+
+        //////////////// Swap logic ////////////////
+        uint256 previousOwnerUSDC = USDC.balanceOf(owner);
+
+        deposit.swapAssets(nftAsset);
+
+        // Deposit contract doesn't have any AssetNft anymore
+        assertEq(nftAsset.balanceOf(address(deposit)), 0);
+        // buyer received AssetNft
+        assertEq(nftAsset.balanceOf(buyer), 1);
+        // Deposit contract doesn't have any USDC anymore
+        assertEq(USDC.balanceOf(address(deposit)), 0);
+        // Seller received the deposited USDC for the price agreeed
+        assertEq(USDC.balanceOf(owner), previousOwnerUSDC + approval.price);
+    }
 }
