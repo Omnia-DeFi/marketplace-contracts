@@ -136,6 +136,7 @@ contract MockAssetListingTest is Test {
 
         // fetch saved offer approval
         (
+            address savedSeller,
             address savedBuyer,
             bool atFloorPrice,
             uint256 price,
@@ -145,6 +146,7 @@ contract MockAssetListingTest is Test {
             bool ownerSignature
         ) = approval.approvedOfferOf(nftAsset);
 
+        assertEq(savedSeller, owner);
         assertEq(savedBuyer, buyer);
         assertTrue(atFloorPrice);
         assertEq(price, conditionsSetUp.floorPrice);
@@ -168,6 +170,7 @@ contract MockAssetListingTest is Test {
 
         OfferApproval.Approval memory approval_;
         (
+            approval_.seller,
             approval_.buyer,
             approval_.atFloorPrice,
             approval_.price,
@@ -207,6 +210,7 @@ contract MockAssetListingTest is Test {
 
         // fetch saved offer approval
         (
+            address savedSeller,
             address savedBuyer,
             bool atFloorPrice,
             uint256 price,
@@ -216,6 +220,7 @@ contract MockAssetListingTest is Test {
             bool ownerSignature
         ) = approval.approvedOfferOf(nftAsset);
 
+        assertEq(savedSeller, owner);
         assertEq(savedBuyer, buyer);
         assertFalse(atFloorPrice);
         assertEq(price, customPrice);
@@ -240,6 +245,7 @@ contract MockAssetListingTest is Test {
         uint256 customPrice = 324015 * 100;
 
         OfferApproval.Approval memory approval_;
+        approval_.seller = owner;
         approval_.buyer = buyer;
         approval_.atFloorPrice = false;
         approval_.price = customPrice;

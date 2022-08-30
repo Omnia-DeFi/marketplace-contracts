@@ -68,6 +68,7 @@ contract DepositTest is Test {
 
         // fetch saved offer approval
         (
+            approval.seller,
             approval.buyer,
             approval.atFloorPrice,
             approval.price,

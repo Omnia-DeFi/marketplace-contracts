@@ -23,6 +23,7 @@ abstract contract OfferApproval is OwnableAsset {
     );
 
     struct Approval {
+        address seller;
         address buyer;
         bool atFloorPrice;
         uint256 price;
@@ -62,6 +63,7 @@ abstract contract OfferApproval is OwnableAsset {
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) internal onlyAssetOwner(asset) oneOfferApprovalPerAsset(asset) {
+        approvedOfferOf[asset].seller = msg.sender;
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = true;
         approvedOfferOf[asset].price = conditions.floorPrice;
@@ -89,6 +91,7 @@ abstract contract OfferApproval is OwnableAsset {
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) internal onlyAssetOwner(asset) oneOfferApprovalPerAsset(asset) {
+        approvedOfferOf[asset].seller = msg.sender;
         approvedOfferOf[asset].buyer = buyer;
         approvedOfferOf[asset].atFloorPrice = false;
         approvedOfferOf[asset].price = salePrice;
