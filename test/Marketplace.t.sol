@@ -82,4 +82,9 @@ contract MarketplaceTest is Test {
             extrasSetUp
         );
     }
+
+    function testApproveSaleAtFloorPriceOnlyIfAssetListed() public {
+        vm.expectRevert("ASSET_NOT_LISTED");
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+    }
 }
