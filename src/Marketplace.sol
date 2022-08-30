@@ -110,4 +110,12 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         );
         _emitDepositAsk(asset, approvedOfferOf[asset]);
     }
+
+    function buyerWholeDepositERC20(
+        AssetNft asset,
+        address erc20,
+        string memory erc20Label
+    ) public {
+        _buyerWholeDepositERC20(asset, erc20, erc20Label);
+    }
 }
