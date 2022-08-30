@@ -5,6 +5,7 @@ import "forge-std/Test.sol";
 
 import {Marketplace, AssetNft, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
 import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
+import {MockUSDC} from "./mock/MockUSDC.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -32,6 +33,7 @@ contract MarketplaceTest is Test {
     AssetNft public assetNft;
 
     Marketplace marketplace;
+    MockUSDC public immutable USDC = new MockUSDC();
     SaleConditions.Conditions conditionsSetUp;
     SaleConditions.ExtraSaleTerms extrasSetUp;
 
@@ -55,6 +57,12 @@ contract MarketplaceTest is Test {
         );
 
         createBaseSaleConditions();
+    }
+
+    function _mintUSDCTo(address to, uint256 amount) internal {
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        USDC.mint(to, amount);
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -209,5 +217,30 @@ contract MarketplaceTest is Test {
         assertEq(approval.seller, owner);
         assertEq(approval.buyer, alice);
         assertEq(approval.price, customPrice);
+    }
+
+    function testBuyerWholeDepositFailsOnBuyerNotApproved() public {
+        vm.expectRevert("BUYER_NOT_APPROVED");
+        marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
+    }
+
+    function testBuyerWholeDeposit() public {
+        _mintUSDCTo(alice, 6450592 * 10**18);
+
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        USDC.approve(address(marketplace), conditionsSetUp.floorPrice);
+        marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
+
+        ////////////////// Verify DepositData.BuyerData values //////////////////
     }
 }
