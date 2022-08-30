@@ -283,7 +283,8 @@ contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT FROM SELLER
     //////////////////////////////////////////////////////////////*/
-    function testSellerCanDepositAssetNftOnlyAfterBuyerDeposit() public {
+    // Seller can only deposit AssetNft after the buyer deposited ERC20
+    function tesBuyerDepositFirst() public {
         vm.startPrank(owner);
 
         vm.expectRevert("BUYER_DEPOSIT_FIRST");
@@ -372,6 +373,13 @@ contract DepositTest is Test {
         vm.expectEmit(true, true, false, true);
         emit SellerDeposit(nftAsset, sellerData, depositState, block.timestamp);
         deposit.sellerDepositAssetNft(nftAsset);
+    }
+
+    // Swap assets fails on MISSING_DEPOSIT
+    function testAllDepositMadeToTriggerSwap() public {
+        vm.prank(owner);
+        vm.expectRevert("MISSING_DEPOSIT");
+        deposit.swapAssets(nftAsset);
     }
 
     function testSwapAssets() public {
