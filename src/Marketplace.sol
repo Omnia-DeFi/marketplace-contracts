@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "./libraries/ListingLib.sol";
 import {AssetNft} from "omnia-nft/AssetNft.sol";
 import {AssetListing} from "./AssetListing.sol";
 import {SaleConditions} from "./SaleConditions.sol";
@@ -17,7 +18,7 @@ import {Deposit} from "./Deposit.sol";
  * @dev Connects AssetListing, SaleConditions, AssetOfferAproval,
  *      Deposit & SaleConsummation contracts together.
  */
-contract Marketplace is AssetListing, SaleConditions {
+contract Marketplace is AssetListing, SaleConditions, OfferApproval {
     event SaleConsummated(
         address indexed asset,
         address indexed buyer,
@@ -30,6 +31,14 @@ contract Marketplace is AssetListing, SaleConditions {
     //////////////////////////////////////////////////////////////*/
     /// @dev USD price only has 2 decimals.
     uint256 public constant FIAT_PRICE_DECIMAL = 10**2;
+
+    modifier onlyListedAsset(AssetNft asset) {
+        require(
+            listingStatusOf[asset] == ListingLib.Status.ActiveListing,
+            "ASSET_NOT_LISTED"
+        );
+        _;
+    }
 
     /**
      * @notice List an asset for sale on the marketplace with compulsory sale conditions
@@ -64,4 +73,13 @@ contract Marketplace is AssetListing, SaleConditions {
         SaleConditions conditions,
         Deposit deposit
     ) external returns (bool) {}
+
+    /**
+     */
+    function approveSale(
+        AssetNft asset,
+        address buyer,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) external onlyListedAsset(asset) {}
 }
