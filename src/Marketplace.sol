@@ -18,7 +18,7 @@ import {Deposit} from "./Deposit.sol";
  * @dev Connects AssetListing, SaleConditions, AssetOfferAproval,
  *      Deposit & SaleConsummation contracts together.
  */
-contract Marketplace is AssetListing, SaleConditions, OfferApproval {
+contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     event SaleConsummated(
         address indexed asset,
         address indexed buyer,
@@ -75,11 +75,19 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval {
     ) external returns (bool) {}
 
     /**
+     * see documentation of: OfferApproval._approveSaleOfAtFloorPrice &
+     *                       Deposit._emitDepositAsk
+     * @notice Approve a buy request from a specific buyer for a specific NFT asset at floor
+     *      price.
+     * @dev `onlyListedAsset` verifies that the asset is listed, otherwise fails.
      */
     function approveSale(
         AssetNft asset,
         address buyer,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) external onlyListedAsset(asset) {}
+    ) external onlyListedAsset(asset) {
+        _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
+        _emitDepositAsk(asset, approvedOfferOf[asset]);
+    }
 }
