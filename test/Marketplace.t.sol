@@ -3,8 +3,9 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import {Marketplace, AssetNft, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
+import {AssetNft, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
 import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
+import {MockMarketplace} from "./mock/MockMarketplace.sol";
 import {MockUSDC} from "./mock/MockUSDC.sol";
 
 contract MarketplaceTest is Test {
@@ -32,7 +33,7 @@ contract MarketplaceTest is Test {
     //////////////////////////////////////////////////////////////*/
     AssetNft public assetNft;
 
-    Marketplace marketplace;
+    MockMarketplace marketplace;
     MockUSDC public immutable USDC = new MockUSDC();
     SaleConditions.Conditions conditionsSetUp;
     SaleConditions.ExtraSaleTerms extrasSetUp;
@@ -46,7 +47,7 @@ contract MarketplaceTest is Test {
     }
 
     function setUp() public {
-        marketplace = new Marketplace();
+        marketplace = new MockMarketplace();
         assetNft = new AssetNft("AssetMocked", "MA1", owner);
 
         vm.prank(owner);
@@ -242,5 +243,9 @@ contract MarketplaceTest is Test {
         marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
 
         ////////////////// Verify DepositData.BuyerData values //////////////////
+    }
+
+    function testResetSale() public {
+        marketplace.resetSale(assetNft);
     }
 }
