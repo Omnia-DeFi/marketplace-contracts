@@ -103,26 +103,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _setSaleConditions(asset, conditions, extras);
     }
 
-    /**
-     * @notice Once all sale conditions are met, the sale of the asset is
-     *         consummated and the swap is instantly made. Each side wil
-     *         receive their respective assets.
-     *
-     * @param asset The asset to be consummated.
-     * @param buyer The buyer of the asset.
-     * @param conditions The sale conditions of the asset.
-     * @param deposit The deposit contractcontaing the currency and the
-     *                NFTs.
-     *
-     * @return Sale consummation success or failure.
-     */
-    function consummateSale(
-        address asset,
-        address buyer,
-        SaleConditions conditions,
-        Deposit deposit
-    ) external returns (bool) {}
-
+    // TODO: test edges cases with `noSaleInProcess`
     /**
      * see documentation of: OfferApproval._approveSaleOfAtFloorPrice &
      *                       Deposit._emitDepositAsk
@@ -189,5 +170,24 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _resetSaleConditions(asset);
         _resetAssetOfferApproval(asset);
         _resetDepositData(asset);
+    }
+
+    // TODO: add event and test failure and edges cases
+    /**
+     * @notice Once all sale conditions are met, the sale of the asset is
+     *         consummated and the swap is instantly made. Each side wil
+     *         receive their respective assets.
+     *         All Data related to this sale will deleted and sale status updated.
+     *
+     * @dev For now SaleConditions can only fail on TIME_SALE_VOIDED
+     */
+    function _consummateSale(AssetNft asset)
+        internal
+        saleMustBeInProcess(asset)
+        saleConditionsMustBeMet(asset)
+    {
+        _swapAssets(asset);
+        saleStateOf[asset] = SaleSate.Consummated;
+        _resetSaleAfterConsummation(asset);
     }
 }
