@@ -40,6 +40,14 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _;
     }
 
+    modifier onSaleVoided(AssetNft asset) {
+        _;
+    }
+
+    modifier onSaleConsummated(AssetNft asset) {
+        _;
+    }
+
     /**
      * @notice List an asset for sale on the marketplace with compulsory sale conditions
      *         and optional extra sale terms.
@@ -118,4 +126,11 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     ) public {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
+
+    function _resetSale(AssetNft asset)
+        internal
+        // onAllDepositMade(asset)
+        onSaleVoided(asset)
+        onSaleConsummated(asset)
+    {}
 }
