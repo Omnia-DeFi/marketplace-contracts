@@ -70,7 +70,14 @@ contract MarketplaceTest is Test {
         USDC.mint(to, amount);
     }
 
-    function _assetListingToSwapCompleteFlow() internal {
+    function _listAssetWithConditions()
+        internal
+        returns (
+            ListingLib.Status,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        )
+    {
         vm.startPrank(owner);
 
         ListingLib.Status mstatus = marketplace.mockAssetListing(assetNft);
@@ -78,12 +85,27 @@ contract MarketplaceTest is Test {
             SaleConditions.Conditions memory mConditions,
             SaleConditions.ExtraSaleTerms memory mExtras
         ) = marketplace.mockSaleConditions(assetNft);
+
+        vm.stopPrank();
+
+        return (mstatus, mConditions, mExtras);
+    }
+
+    function _createAssetOffer(
+        SaleConditions.Conditions memory mConditions,
+        SaleConditions.ExtraSaleTerms memory mExtras
+    ) internal returns (OfferApproval.Approval memory) {
+        vm.startPrank(owner);
         OfferApproval.Approval memory mApproval = marketplace
             .approveSaleOfAtFloorPrice(assetNft, alice, mConditions, mExtras);
-        vm.stopPrank(); // stop pranking owner
+        vm.stopPrank();
 
-        // Deposit updates
-        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        return mApproval;
+    }
+
+    function _buyerApproveMarketplaceAsSpenderAndDepositERC20(
+        OfferApproval.Approval memory mApproval
+    ) internal {
         vm.startPrank(alice);
         IERC20(address(USDC)).approve(address(marketplace), mApproval.price);
         marketplace.emitDepositAskAndBuyerDepositWithERC20Approved(
@@ -93,11 +115,32 @@ contract MarketplaceTest is Test {
             mApproval
         );
         vm.stopPrank(); // stop pranking alice
+    }
 
+    function _sellerApproveMarketplaceAsSpenderAndDepositAssetNft() internal {
         vm.startPrank(owner);
         assetNft.approve(address(marketplace), 0);
-        marketplace.sellerDepositAndSwap(assetNft);
+        marketplace.sellerDepositAssetNft(assetNft);
         vm.stopPrank(); // stop pranking owner
+    }
+
+    function _assetListingToAllDeposit() internal {
+        (
+            ListingLib.Status mstatus,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+
+        OfferApproval.Approval memory mApproval = _createAssetOffer(
+            mConditions,
+            mExtras
+        );
+
+        // Deposit updates
+        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
+
+        _sellerApproveMarketplaceAsSpenderAndDepositAssetNft();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -283,7 +326,7 @@ contract MarketplaceTest is Test {
         NoEmptyValueTest noEmptyValue = new NoEmptyValueTest();
         EmptyValueTest emptyValue = new EmptyValueTest();
 
-        _assetListingToSwapCompleteFlow();
+        _assetListingToAllDeposit();
 
         noEmptyValue.verifiesAssetIsListed(marketplace, assetNft);
         noEmptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);

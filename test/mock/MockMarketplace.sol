@@ -57,8 +57,11 @@ contract MockMarketplace is Marketplace {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 
-    function sellerDepositAndSwap(AssetNft asset) public {
+    function sellerDepositAssetNft(AssetNft asset) public {
         _sellerDepositAssetNft(asset);
+    }
+
+    function swapAssets(AssetNft asset) public {
         _swapAssets(asset);
     }
 }
