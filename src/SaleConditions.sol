@@ -1,37 +1,45 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
-import "./interfaces/ISaleConditions.sol";
-import {Marketplace} from "./Marketplace.sol";
+import {AssetNft} from "omnia-nft/AssetNft.sol";
+import {OwnableAsset} from "./OwnableAsset.sol";
 
 /**
  * @notice Set the conditions for a sale of a specific asset as soon as
  *         it get listed.
- *
- *         The seller can update the conditions at any point in time
- *         prior a deposit. It is up to the buyer to find an (off-chain)
- *         agreement with the seller.
  *
  * @dev This contract can update the listing status if an asset in the
  *      Marketplace depending on conditions, such as: deposit made to
  *      lock the asset, sale  consummated, sale cancelled, sale voided
  *      (before desposit), etc...
  */
-contract SaleConditions is ISaleConditions {
+abstract contract SaleConditions is OwnableAsset {
+    event SaleConditionsSet(
+        AssetNft indexed asset,
+        Conditions indexed conditions,
+        ExtraSaleTerms indexed extras
+    );
+    event SaleConditionsReset(AssetNft indexed asset, uint256 timestamp);
+
+    struct PaymentTerms {
+        uint256 consummationSaleTimeframe; // at least 1 day
+    }
+    struct Conditions {
+        uint256 floorPrice; // price defined by the owner, in USD
+        PaymentTerms paymentTerms;
+    }
+    struct ExtraSaleTerms {
+        string label;
+        string customTermDescription;
+    }
+
     mapping(AssetNft => Conditions) public saleConditionsOf;
     mapping(AssetNft => ExtraSaleTerms) public extraSaleConditionsOf;
 
     /*//////////////////////////////////////////////////////////////
                                  MODIFIERS
     //////////////////////////////////////////////////////////////*/
-    modifier onlyAssetOwner(AssetNft assetNft) {
-        // require(assetNft.owner(assetId) == msg.sender, "NOT_OWNER");
-        _;
-    }
-
-    modifier saleConditionsFormat(
-        ISaleConditions.Conditions memory conditions
-    ) {
+    modifier saleConditionsFormat(Conditions memory conditions) {
         require(conditions.floorPrice > 0, "ZERO_FLOOR_PRICE");
         require(
             conditions.paymentTerms.consummationSaleTimeframe >= 24 hours,
@@ -64,13 +72,23 @@ contract SaleConditions is ISaleConditions {
         _;
     }
 
-    /// @inheritdoc ISaleConditions
-    function setSaleConditions(
+    /**
+     * @notice The seller (NFT asset owner) defines the conditions for
+     *         the sale, which includes but not limited to: minmum
+     *         deposit amount to lock the asset, the timeframe for the
+     *         deposit, the timeframe for sale to be concluded, and any
+     *         extra conditions that the seller requires.
+     *
+     * @param asset The adress of the asset NFT repository.
+     * @param conditions The conditions of the sale.
+     * @param extras Any extra terms required by the seller.
+     */
+    function _setSaleConditions(
         AssetNft asset,
         Conditions memory conditions,
         ExtraSaleTerms memory extras
     )
-        external
+        internal
         onlyAssetOwner(asset)
         saleConditionsFormat(conditions)
         extraTermsFormat(extras)
@@ -82,10 +100,10 @@ contract SaleConditions is ISaleConditions {
         emit SaleConditionsSet(asset, conditions, extras);
     }
 
-    /// @inheritdoc ISaleConditions
-    function updateSaleConditions(
-        address asset,
-        Conditions memory conditions,
-        ExtraSaleTerms memory extras
-    ) external {}
+    function _resetSaleConditions(AssetNft asset) internal {
+        delete saleConditionsOf[asset];
+        delete extraSaleConditionsOf[asset];
+
+        emit SaleConditionsReset(asset, block.timestamp);
+    }
 }

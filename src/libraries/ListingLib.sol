@@ -9,9 +9,6 @@ library ListingLib {
     enum Status {
         Unlisted,
         ActiveListing,
-        UnlistedByDeposit,
-        SaleVoided,
-        SaleCancelled,
-        SaleConsummated
+        UnlistedByDeposit
     }
 }
