@@ -173,7 +173,6 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
      */
     function _resetSaleAfterConsummation(AssetNft asset)
         internal
-        onAllDepositMade(asset)
         onSaleConsummated(asset)
     {
         _unlistAsset(asset);
