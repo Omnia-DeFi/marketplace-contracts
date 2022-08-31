@@ -74,8 +74,8 @@ contract MarketplaceTest is Test {
         internal
         returns (
             ListingLib.Status,
-            SaleConditions.Conditions memory mConditions,
-            SaleConditions.ExtraSaleTerms memory mExtras
+            SaleConditions.Conditions memory,
+            SaleConditions.ExtraSaleTerms memory
         )
     {
         vm.startPrank(owner);
