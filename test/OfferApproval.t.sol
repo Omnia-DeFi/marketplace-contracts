@@ -270,4 +270,6 @@ contract MockAssetListingTest is Test {
         // verify timestamp registered in OfferApproval is the same thena the one in this test
         assertEq(approval_.approvalTimestamp, approval.savedTimestamp());
     }
+
+    //TODO: test _resetAssetOfferApproval & OfferApprovalReset event emittance
 }

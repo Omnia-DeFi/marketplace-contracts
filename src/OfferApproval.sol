@@ -21,6 +21,7 @@ abstract contract OfferApproval is OwnableAsset {
         Approval indexed approval,
         uint256 indexed price
     );
+    event OfferApprovalReset(AssetNft indexed asset, uint256 timestamp);
 
     struct Approval {
         address seller;
@@ -105,5 +106,11 @@ abstract contract OfferApproval is OwnableAsset {
             approvedOfferOf[asset],
             salePrice
         );
+    }
+
+    function _resetAssetOfferApproval(AssetNft asset) internal {
+        delete approvedOfferOf[asset];
+
+        emit OfferApprovalReset(asset, block.timestamp);
     }
 }
