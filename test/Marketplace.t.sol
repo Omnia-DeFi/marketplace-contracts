@@ -369,4 +369,36 @@ contract MarketplaceTest is Test {
         emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
         emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
     }
+
+    function testSellerDepositAndConsummateSale() public {
+        // List asset with sale conditions
+        (
+            ListingLib.Status mstatus,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+        // OfferApproval registration
+        OfferApproval.Approval memory mApproval = _createAssetOffer(
+            mConditions,
+            mExtras
+        );
+        // Deposit updates
+        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
+
+        vm.startPrank(owner);
+        assetNft.approve(address(marketplace), 0);
+        marketplace.sellerDepositAndConsummateSale(assetNft);
+
+        assertEq(
+            uint256(marketplace.saleStateOf(assetNft)),
+            uint256(Marketplace.SaleSate.Consummated)
+        );
+
+        EmptyValueTest emptyValue = new EmptyValueTest();
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+    }
 }
