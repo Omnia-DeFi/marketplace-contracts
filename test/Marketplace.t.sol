@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import {AssetNft, ListingLib, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
 import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
-import {MockMarketplace} from "./mock/MockMarketplace.sol";
+import {MockMarketplace, Marketplace} from "./mock/MockMarketplace.sol";
 import {MockDeposit} from "./mock/MockDeposit.sol";
 import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
 // utils
@@ -347,6 +347,23 @@ contract MarketplaceTest is Test {
         marketplace.setSaleStateAsConsummated(assetNft);
         marketplace.resetSaleAfterConsummation(assetNft);
 
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+    }
+
+    function testSaleConsummation() public {
+        _assetListingToAllDeposit();
+
+        marketplace.consummateSale(assetNft);
+
+        assertEq(
+            uint256(marketplace.saleStateOf(assetNft)),
+            uint256(Marketplace.SaleSate.Consummated)
+        );
+
+        EmptyValueTest emptyValue = new EmptyValueTest();
         emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
         emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
         emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
