@@ -21,6 +21,15 @@ abstract contract AssetListing is OwnableAsset {
 
     mapping(AssetNft => ListingLib.Status) public listingStatusOf;
 
+    modifier onlyUnlistedAsset(AssetNft asset) {
+        require(
+            listingStatusOf[asset] == ListingLib.Status.Unlisted,
+            "ASSET_ALREADY_LISTED"
+        );
+        _;
+    }
+
+    // TODO: test edges cases with `onlyUnlistedAsset` adding
     /**
      * @notice List an asset on the Marketplace for sale with specific
      *         sale conditions.
@@ -29,7 +38,11 @@ abstract contract AssetListing is OwnableAsset {
      *
      * @param asset The asset to be listed on the Marketplace.
      */
-    function _listAsset(AssetNft asset) internal onlyAssetOwner(asset) {
+    function _listAsset(AssetNft asset)
+        internal
+        onlyAssetOwner(asset)
+        onlyUnlistedAsset(asset)
+    {
         listingStatusOf[asset] = ListingLib.Status.ActiveListing;
 
         emit AssetListed(asset, listingStatusOf[asset]);
