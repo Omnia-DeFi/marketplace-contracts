@@ -3,10 +3,13 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import {AssetNft, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
+import {AssetNft, ListingLib, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
 import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
-import {MockUSDC} from "./mock/MockUSDC.sol";
+import {MockDeposit} from "./mock/MockDeposit.sol";
+import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
+// utils
+import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -64,6 +67,36 @@ contract MarketplaceTest is Test {
         // Owner mints USDC to buyer
         vm.prank(owner);
         USDC.mint(to, amount);
+    }
+
+    function _assetListingToSwapCompleteFlow() internal {
+        vm.startPrank(owner);
+
+        ListingLib.Status mstatus = marketplace.mockAssetListing(assetNft);
+        (
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = marketplace.mockSaleConditions(assetNft);
+        OfferApproval.Approval memory mApproval = marketplace
+            .approveSaleOfAtFloorPrice(assetNft, alice, mConditions, mExtras);
+        vm.stopPrank(); // stop pranking owner
+
+        // Deposit updates
+        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        vm.startPrank(alice);
+        IERC20(address(USDC)).approve(address(marketplace), mApproval.price);
+        marketplace.emitDepositAskAndBuyerDepositWithERC20Approved(
+            assetNft,
+            address(USDC),
+            "USDC",
+            mApproval
+        );
+        vm.stopPrank(); // stop pranking alice
+
+        vm.startPrank(owner);
+        assetNft.approve(address(marketplace), 0);
+        marketplace.sellerDepositAndSwap(assetNft);
+        vm.stopPrank(); // stop pranking owner
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -246,6 +279,18 @@ contract MarketplaceTest is Test {
     }
 
     function testResetSale() public {
+        NoEmptyValueTest noEmptyValue = new NoEmptyValueTest();
+
+        _assetListingToSwapCompleteFlow();
+
+        noEmptyValue.verifiesAssetIsListed(marketplace, assetNft);
+        noEmptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);
+        noEmptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
+
         marketplace.resetSale(assetNft);
+
+        // emptyValue.verifiesAssetIsListed(marketplace, assetNft);
+        // emptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);
+        // emptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
     }
 }
