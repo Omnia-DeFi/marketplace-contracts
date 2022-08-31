@@ -289,8 +289,8 @@ contract MarketplaceTest is Test {
 
         marketplace.resetSaleAfterConsummation(assetNft);
 
-        // emptyValue.verifiesAssetIsListed(marketplace, assetNft);
-        // emptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);
-        // emptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
+        // emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        // emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        // emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
     }
 }

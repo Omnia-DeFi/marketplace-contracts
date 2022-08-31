@@ -6,7 +6,7 @@ import "forge-std/Test.sol";
 import {AssetNft, ListingLib, AssetListing, SaleConditions, Deposit} from "../../src/Marketplace.sol";
 
 contract EmptyValueTest is Test {
-    function verifiesAssetIsListed(AssetListing listing, AssetNft asset)
+    function verifiesAssetIsNotListed(AssetListing listing, AssetNft asset)
         public
     {
         assertTrue(
@@ -14,7 +14,7 @@ contract EmptyValueTest is Test {
         );
     }
 
-    function verifySaleCondtionsAreNotEmpty(SaleConditions sale, AssetNft asset)
+    function verifySaleCondtionsAreEmpty(SaleConditions sale, AssetNft asset)
         public
     {
         // fetch Conditions
@@ -32,9 +32,7 @@ contract EmptyValueTest is Test {
         assertTrue(bytes(customTermDescription).length == 0);
     }
 
-    function verifyDepositDataAreNotEmpty(Deposit deposit, AssetNft asset)
-        public
-    {
+    function verifyDepositDataAreEmpty(Deposit deposit, AssetNft asset) public {
         (
             Deposit.DepositState memory dS,
             Deposit.ApprovalResume memory aR,
