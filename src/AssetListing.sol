@@ -37,14 +37,12 @@ abstract contract AssetListing is OwnableAsset {
 
     /**
      * @notice Unlist an asset from the Marketplace.
-     * @dev Only the SaleConditions can unlist an asset.
      *
-     * @param asset The asset to be listed on the Marketplace.
-     * @param listingStatus The asset listing status with the reason of
-     *        the unlisting.
+     * @param asset The asset to be unlisted from the Marketplace.
      */
-    function _unlistAsset(AssetNft asset, ListingLib.Status listingStatus)
-        internal
-        returns (bool)
-    {}
+    function _unlistAsset(AssetNft asset) internal {
+        listingStatusOf[asset] = ListingLib.Status.Unlisted;
+
+        emit AssetUnlisted(asset, listingStatusOf[asset]);
+    }
 }
