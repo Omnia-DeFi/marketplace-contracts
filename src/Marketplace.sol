@@ -41,11 +41,13 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     }
 
     // TODO: implement logic to verify a sale has been voided
+    // TODO: Test the modifier on its on failure cases
     modifier onSaleVoided(AssetNft asset) {
         _;
     }
 
     // TODO: implement logic to verify a sale has been consummated
+    // TODO: Test the modifier on its on failure cases
     modifier onSaleConsummated(AssetNft asset) {
         _;
     }
@@ -101,6 +103,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _emitDepositAsk(asset, approvedOfferOf[asset]);
     }
 
+    // TODO: test edges cases with `noSaleInProcess`
     /**
      * @notice Overload `approveSale` with custom price.
      */
@@ -121,6 +124,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _emitDepositAsk(asset, approvedOfferOf[asset]);
     }
 
+    // TODO: test edges cases with `noSaleInProcess`
     function buyerWholeDepositERC20(
         AssetNft asset,
         address erc20,
@@ -129,6 +133,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 
+    // TODO: add event and test failure and edges cases
     // TODO: add an attribute and update variables somewhere to mark this call as sale consummated
     /**
      * @notice Reset all data related to a sale of an asset.
