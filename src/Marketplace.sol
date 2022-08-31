@@ -32,6 +32,16 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     /// @dev USD price only has 2 decimals.
     uint256 public constant FIAT_PRICE_DECIMAL = 10**2;
 
+    enum SaleSate {
+        Null,
+        Processing,
+        Consummated,
+        Voided,
+        Cancelled
+    }
+
+    mapping(AssetNft => SaleSate) public saleStateOf;
+
     modifier onlyListedAsset(AssetNft asset) {
         require(
             listingStatusOf[asset] == ListingLib.Status.ActiveListing,
@@ -98,9 +108,11 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         address buyer,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) external onlyListedAsset(asset) {
+    ) public onlyListedAsset(asset) noSaleInProcess(asset) {
         _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
         _emitDepositAsk(asset, approvedOfferOf[asset]);
+
+        saleStateOf[asset] = SaleSate.Processing;
     }
 
     // TODO: test edges cases with `noSaleInProcess`
@@ -122,6 +134,8 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
             extras
         );
         _emitDepositAsk(asset, approvedOfferOf[asset]);
+
+        saleStateOf[asset] = SaleSate.Processing;
     }
 
     // TODO: test edges cases with `noSaleInProcess`
