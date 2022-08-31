@@ -86,7 +86,7 @@ abstract contract Deposit is ERC721TokenReceiver {
         _;
     }
 
-    modifier allDepositMade(AssetNft asset) {
+    modifier onAllDepositMade(AssetNft asset) {
         require(
             depositedDataOf[asset].state.status == DepositStatus.AllDepositMade,
             "MISSING_DEPOSIT"
@@ -166,7 +166,7 @@ abstract contract Deposit is ERC721TokenReceiver {
      * @param asset The listed `AssetNft` with an `OfferApproval` linked, that the buyer
      *              will receive.
      */
-    function _swapAssets(AssetNft asset) internal allDepositMade(asset) {
+    function _swapAssets(AssetNft asset) internal onAllDepositMade(asset) {
         // transfer AssetNft from this contract to the buyer
         asset.safeTransferFrom(
             address(this),
