@@ -40,10 +40,12 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _;
     }
 
+    // TODO: implement logic to verify a sale has been voided
     modifier onSaleVoided(AssetNft asset) {
         _;
     }
 
+    // TODO: implement logic to verify a sale has been consummated
     modifier onSaleConsummated(AssetNft asset) {
         _;
     }
@@ -127,10 +129,16 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 
+    // TODO: add an attribute and update variables somewhere to mark this call as sale consummated
     function _resetSaleAfterConsummation(AssetNft asset)
         internal
         onAllDepositMade(asset)
         onSaleVoided(asset)
         onSaleConsummated(asset)
-    {}
+    {
+        _unlistAsset(asset);
+        _resetSaleConditions(asset);
+        _resetAssetOfferApproval(asset);
+        _resetDepositData(asset);
+    }
 }
