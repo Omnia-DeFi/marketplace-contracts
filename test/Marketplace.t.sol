@@ -96,8 +96,12 @@ contract MarketplaceTest is Test {
         SaleConditions.ExtraSaleTerms memory mExtras
     ) internal returns (OfferApproval.Approval memory) {
         vm.startPrank(owner);
-        OfferApproval.Approval memory mApproval = marketplace
-            .approveSaleOfAtFloorPrice(assetNft, alice, mConditions, mExtras);
+        OfferApproval.Approval memory mApproval = marketplace.mockApproveSale(
+            assetNft,
+            alice,
+            mConditions,
+            mExtras
+        );
         vm.stopPrank();
 
         return mApproval;
@@ -298,6 +302,13 @@ contract MarketplaceTest is Test {
     }
 
     function testBuyerWholeDepositFailsOnBuyerNotApproved() public {
+        (
+            ,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+        _createAssetOffer(mConditions, mExtras);
+
         vm.expectRevert("BUYER_NOT_APPROVED");
         marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
     }
@@ -333,6 +344,7 @@ contract MarketplaceTest is Test {
         noEmptyValue.verifyAssetOfferAprovalIsNotEmpty(marketplace, assetNft);
         noEmptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
 
+        marketplace.setSaleStateAsConsummated(assetNft);
         marketplace.resetSaleAfterConsummation(assetNft);
 
         emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);

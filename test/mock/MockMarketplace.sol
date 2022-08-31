@@ -36,13 +36,13 @@ contract MockMarketplace is Marketplace {
         return (saleConditionsOf[asset], extraSaleConditionsOf[asset]);
     }
 
-    function approveSaleOfAtFloorPrice(
+    function mockApproveSale(
         AssetNft asset,
         address buyer,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) public returns (OfferApproval.Approval memory) {
-        _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
+        approveSale(asset, buyer, conditions, extras);
 
         return approvedOfferOf[asset];
     }
@@ -63,5 +63,9 @@ contract MockMarketplace is Marketplace {
 
     function swapAssets(AssetNft asset) public {
         _swapAssets(asset);
+    }
+
+    function setSaleStateAsConsummated(AssetNft asset) public {
+        saleStateOf[asset] = SaleSate.Consummated;
     }
 }
