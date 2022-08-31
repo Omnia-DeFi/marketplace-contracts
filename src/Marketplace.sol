@@ -190,4 +190,19 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         saleStateOf[asset] = SaleSate.Consummated;
         _resetSaleAfterConsummation(asset);
     }
+
+    // TODO: add event and test failure and edges cases
+    /**
+     * @notice For now, when the seller deposits their `AssetNft` it will mark the sale as
+     *         consummated, as the buyer must deposit their `ERC20` before this happens.
+     * @dev The seller will not be able to deposit after the timeframe of SaleConditions
+     *      has passed because the sale must be consummated by then.
+     */
+    function sellerDepositAndConsummateSale(AssetNft asset)
+        external
+        onlyAssetOwner(asset)
+    {
+        _sellerDepositAssetNft(asset);
+        _consummateSale(asset);
+    }
 }
