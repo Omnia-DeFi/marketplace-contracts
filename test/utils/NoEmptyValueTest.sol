@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import {AssetNft, ListingLib, AssetListing, SaleConditions, Deposit} from "../../src/Marketplace.sol";
+import {AssetNft, ListingLib, AssetListing, SaleConditions, OfferApproval, Deposit} from "../../src/Marketplace.sol";
 
 contract NoEmptyValueTest is Test {
     function verifiesAssetIsListed(AssetListing listing, AssetNft asset)
@@ -30,6 +30,33 @@ contract NoEmptyValueTest is Test {
         assertTrue(paymentTerms.consummationSaleTimeframe != 0);
         assertTrue(bytes(label).length != 0);
         assertTrue(bytes(customTermDescription).length != 0);
+    }
+
+    function verifyAssetOfferAprovalIsNotEmpty(
+        OfferApproval approval,
+        AssetNft asset
+    ) public {
+        (
+            address seller,
+            address buyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = approval.approvedOfferOf(asset);
+
+        assertTrue(seller != address(0));
+        assertTrue(buyer != address(0));
+        assertTrue(atFloorPrice != false);
+        assertTrue(price != 0);
+        assertTrue(approvalTimestamp != 0);
+        assertTrue(conditions.floorPrice != 0);
+        assertTrue(conditions.paymentTerms.consummationSaleTimeframe != 0);
+        assertTrue(bytes(extras.label).length != 0);
+        assertTrue(bytes(extras.customTermDescription).length != 0);
+        assertTrue(ownerSignature != false);
     }
 
     function verifyDepositDataAreNotEmpty(Deposit deposit, AssetNft asset)

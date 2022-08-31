@@ -285,6 +285,7 @@ contract MarketplaceTest is Test {
 
         noEmptyValue.verifiesAssetIsListed(marketplace, assetNft);
         noEmptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);
+        noEmptyValue.verifyAssetOfferAprovalIsNotEmpty(marketplace, assetNft);
         noEmptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
 
         marketplace.resetSaleAfterConsummation(assetNft);
