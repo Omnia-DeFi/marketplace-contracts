@@ -130,10 +130,14 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     }
 
     // TODO: add an attribute and update variables somewhere to mark this call as sale consummated
+    /**
+     * @notice Reset all data related to a sale of an asset.
+     * @dev All deposits (buyer and seller) must have been made and sale must be marked as
+     *      consummated.
+     */
     function _resetSaleAfterConsummation(AssetNft asset)
         internal
         onAllDepositMade(asset)
-        onSaleVoided(asset)
         onSaleConsummated(asset)
     {
         _unlistAsset(asset);
