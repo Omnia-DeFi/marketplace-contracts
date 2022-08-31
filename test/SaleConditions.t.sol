@@ -157,4 +157,6 @@ contract MockSaleConditionsTest is Test {
         assertEq(savedLabel, extras_.label);
         assertEq(savedeTermDescription, extras_.customTermDescription);
     }
+
+    //TODO: test _resetSaleConditions & SaleConditionsReset event emittance
 }

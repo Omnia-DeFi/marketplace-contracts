@@ -19,6 +19,7 @@ abstract contract SaleConditions is OwnableAsset {
         Conditions indexed conditions,
         ExtraSaleTerms indexed extras
     );
+    event SaleConditionsReset(AssetNft indexed asset, uint256 timestamp);
 
     struct PaymentTerms {
         uint256 consummationSaleTimeframe; // at least 1 day
@@ -97,5 +98,12 @@ abstract contract SaleConditions is OwnableAsset {
         extraSaleConditionsOf[asset] = extras;
 
         emit SaleConditionsSet(asset, conditions, extras);
+    }
+
+    function _resetSaleConditions(AssetNft asset) internal {
+        delete saleConditionsOf[asset];
+        delete extraSaleConditionsOf[asset];
+
+        emit SaleConditionsReset(asset, block.timestamp);
     }
 }
