@@ -68,4 +68,8 @@ contract MockMarketplace is Marketplace {
     function setSaleStateAsConsummated(AssetNft asset) public {
         saleStateOf[asset] = SaleSate.Consummated;
     }
+
+    function consummateSale(AssetNft asset) public {
+        _consummateSale(asset);
+    }
 }
