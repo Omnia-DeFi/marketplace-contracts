@@ -79,6 +79,16 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _;
     }
 
+    // TODO: Test the modifier on its on failure cases, use `skip(25 hours);`
+    modifier saleConditionsMustBeMet(AssetNft asset) {
+        require(
+            (block.timestamp - approvedOfferOf[asset].approvalTimestamp) <=
+                saleConditionsOf[asset].paymentTerms.consummationSaleTimeframe,
+            "TIME_SALE_VOIDED"
+        );
+        _;
+    }
+
     /**
      * @notice List an asset for sale on the marketplace with compulsory sale conditions
      *         and optional extra sale terms.
