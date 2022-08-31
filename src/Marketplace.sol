@@ -50,6 +50,19 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _;
     }
 
+    modifier noSaleInProcess(AssetNft asset) {
+        require(saleStateOf[asset] != SaleSate.Processing, "SALE_IN_PROCESS");
+        _;
+    }
+
+    modifier saleMustBeInProcess(AssetNft asset) {
+        require(
+            saleStateOf[asset] == SaleSate.Processing,
+            "SALE_NOT_IN_PROCESS"
+        );
+        _;
+    }
+
     // TODO: implement logic to verify a sale has been voided
     // TODO: Test the modifier on its on failure cases
     modifier onSaleVoided(AssetNft asset) {
@@ -59,6 +72,10 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
     // TODO: implement logic to verify a sale has been consummated
     // TODO: Test the modifier on its on failure cases
     modifier onSaleConsummated(AssetNft asset) {
+        require(
+            saleStateOf[asset] == SaleSate.Consummated,
+            "SALE_NOT_CONSUMMATED"
+        );
         _;
     }
 
