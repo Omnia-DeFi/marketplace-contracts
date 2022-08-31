@@ -52,7 +52,7 @@ contract MockOfferApproval is OfferApproval {
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
     ) public {
-        approvedOfferOf[asset].seller = msg.sender;
+        approvedOfferOf[asset].seller = seller;
         approvedOfferOf[asset].buyer = buyer;
         // price
         approvedOfferOf[asset].atFloorPrice = true;
