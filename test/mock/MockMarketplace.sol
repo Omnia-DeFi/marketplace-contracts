@@ -22,14 +22,14 @@ contract MockMarketplace is Marketplace {
         public
         returns (Conditions memory, ExtraSaleTerms memory)
     {
-        Conditions memory conditions;
-        ExtraSaleTerms memory extras;
-
-        conditions.floorPrice = 1249014 * FIAT_PRICE_DECIMAL;
-        conditions.paymentTerms.consummationSaleTimeframe = 24 hours;
-
-        extras.label = "Label";
-        extras.customTermDescription = "Custom Description";
+        Conditions memory conditions = Conditions(
+            1249014 * FIAT_PRICE_DECIMAL,
+            PaymentTerms(24 hours)
+        );
+        ExtraSaleTerms memory extras = ExtraSaleTerms(
+            "Label",
+            "Custom Description"
+        );
 
         _setSaleConditions(asset, conditions, extras);
 
