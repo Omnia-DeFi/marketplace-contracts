@@ -142,7 +142,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         uint256 salePrice,
         SaleConditions.Conditions memory conditions,
         SaleConditions.ExtraSaleTerms memory extras
-    ) external onlyListedAsset(asset) {
+    ) public onlyListedAsset(asset) noSaleInProcess(asset) {
         _approveSaleOfAtCustomPrice(
             asset,
             buyer,
@@ -160,7 +160,7 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         AssetNft asset,
         address erc20,
         string memory erc20Label
-    ) public {
+    ) public saleMustBeInProcess(asset) {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 
