@@ -5,8 +5,8 @@ import {Marketplace, ListingLib, AssetNft, SaleConditions, OfferApproval} from "
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
 
 contract MockMarketplace is Marketplace {
-    function resetSale(AssetNft asset) public {
-        _resetSale(asset);
+    function resetSaleAfterConsummation(AssetNft asset) public {
+        _resetSaleAfterConsummation(asset);
     }
 
     function mockAssetListing(AssetNft asset)

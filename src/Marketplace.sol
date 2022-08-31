@@ -127,9 +127,9 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 
-    function _resetSale(AssetNft asset)
+    function _resetSaleAfterConsummation(AssetNft asset)
         internal
-        // onAllDepositMade(asset)
+        onAllDepositMade(asset)
         onSaleVoided(asset)
         onSaleConsummated(asset)
     {}
