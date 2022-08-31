@@ -399,4 +399,6 @@ contract DepositTest is Test {
         // Seller received the deposited USDC for the price agreeed
         assertEq(USDC.balanceOf(owner), previousOwnerUSDC + approval.price);
     }
+
+    //TODO: test _resetDepositData & DepositDataReset event emittance
 }

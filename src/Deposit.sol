@@ -27,6 +27,7 @@ abstract contract Deposit is ERC721TokenReceiver {
         Deposit.DepositData indexed data,
         uint256 depositTime
     );
+    event DepositDataReset(AssetNft indexed asset, uint256 timestamp);
 
     enum DepositStatus {
         Void,
@@ -179,5 +180,11 @@ abstract contract Deposit is ERC721TokenReceiver {
             depositedDataOf[asset].approval.seller,
             depositedDataOf[asset].buyerData.amount
         );
+    }
+
+    function _resetDepositData(AssetNft asset) internal {
+        delete depositedDataOf[asset];
+
+        emit DepositDataReset(asset, block.timestamp);
     }
 }
