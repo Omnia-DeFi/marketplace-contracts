@@ -10,6 +10,7 @@ import {MockDeposit} from "./mock/MockDeposit.sol";
 import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
 // utils
 import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
+import {EmptyValueTest} from "./utils/EmptyValueTest.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -280,6 +281,7 @@ contract MarketplaceTest is Test {
 
     function testResetSale() public {
         NoEmptyValueTest noEmptyValue = new NoEmptyValueTest();
+        EmptyValueTest emptyValue = new EmptyValueTest();
 
         _assetListingToSwapCompleteFlow();
 
@@ -290,8 +292,9 @@ contract MarketplaceTest is Test {
 
         marketplace.resetSaleAfterConsummation(assetNft);
 
-        // emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
-        // emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
-        // emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
     }
 }
