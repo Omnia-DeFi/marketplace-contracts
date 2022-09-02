@@ -3,8 +3,14 @@ pragma solidity ^0.8.13;
 
 import "forge-std/Test.sol";
 
-import "../src/Marketplace.sol";
-import {AssetNft} from "omnia-nft/AssetNft.sol";
+import {AssetNft, ListingLib, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
+import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
+import {MockMarketplace, Marketplace} from "./mock/MockMarketplace.sol";
+import {MockDeposit} from "./mock/MockDeposit.sol";
+import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
+// utils
+import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
+import {EmptyValueTest} from "./utils/EmptyValueTest.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -30,14 +36,115 @@ contract MarketplaceTest is Test {
                                  ASSET
     //////////////////////////////////////////////////////////////*/
     AssetNft public assetNft;
-    uint256 assetPrice;
 
-    Marketplace marketplace;
+    MockMarketplace marketplace;
+    MockUSDC public immutable USDC = new MockUSDC();
+    SaleConditions.Conditions conditionsSetUp;
+    SaleConditions.ExtraSaleTerms extrasSetUp;
+
+    /*//////////////////////////////////////////////////////////////
+                            SET UP TEST DATA
+    //////////////////////////////////////////////////////////////*/
+    function createBaseSaleConditions() public {
+        conditionsSetUp.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
+        conditionsSetUp.paymentTerms.consummationSaleTimeframe = 24 hours;
+    }
 
     function setUp() public {
-        marketplace = new Marketplace();
-        assetNft = new AssetNft(owner);
-        assetPrice = 650000 * marketplace.USD_PRICE_DECIMAL();
+        marketplace = new MockMarketplace();
+        assetNft = new AssetNft("AssetMocked", "MA1", owner);
+
+        vm.prank(owner);
+        assetNft.safeMint(
+            owner,
+            0,
+            "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
+        );
+
+        createBaseSaleConditions();
+    }
+
+    function _mintUSDCTo(address to, uint256 amount) internal {
+        // Owner mints USDC to buyer
+        vm.prank(owner);
+        USDC.mint(to, amount);
+    }
+
+    function _listAssetWithConditions()
+        internal
+        returns (
+            ListingLib.Status,
+            SaleConditions.Conditions memory,
+            SaleConditions.ExtraSaleTerms memory
+        )
+    {
+        vm.startPrank(owner);
+
+        ListingLib.Status mstatus = marketplace.mockAssetListing(assetNft);
+        (
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = marketplace.mockSaleConditions(assetNft);
+
+        vm.stopPrank();
+
+        return (mstatus, mConditions, mExtras);
+    }
+
+    function _createAssetOffer(
+        SaleConditions.Conditions memory mConditions,
+        SaleConditions.ExtraSaleTerms memory mExtras
+    ) internal returns (OfferApproval.Approval memory) {
+        vm.startPrank(owner);
+        OfferApproval.Approval memory mApproval = marketplace.mockApproveSale(
+            assetNft,
+            alice,
+            mConditions,
+            mExtras
+        );
+        vm.stopPrank();
+
+        return mApproval;
+    }
+
+    function _buyerApproveMarketplaceAsSpenderAndDepositERC20(
+        OfferApproval.Approval memory mApproval
+    ) internal {
+        vm.startPrank(alice);
+        IERC20(address(USDC)).approve(address(marketplace), mApproval.price);
+        marketplace.emitDepositAskAndBuyerDepositWithERC20Approved(
+            assetNft,
+            address(USDC),
+            "USDC",
+            mApproval
+        );
+        vm.stopPrank(); // stop pranking alice
+    }
+
+    function _sellerApproveMarketplaceAsSpenderAndDepositAssetNft() internal {
+        vm.startPrank(owner);
+        assetNft.approve(address(marketplace), 0);
+        marketplace.sellerDepositAssetNft(assetNft);
+        vm.stopPrank(); // stop pranking owner
+    }
+
+    function _assetListingToAllDeposit() internal {
+        (
+            ListingLib.Status mstatus,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+
+        OfferApproval.Approval memory mApproval = _createAssetOffer(
+            mConditions,
+            mExtras
+        );
+
+        // Deposit updates
+        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
+
+        _sellerApproveMarketplaceAsSpenderAndDepositAssetNft();
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -48,52 +155,250 @@ contract MarketplaceTest is Test {
      * @dev In the frontend the price will have to be multiplied by 10**2 as blockchains
      *      don't deal with decimals.
      */
-    function testSellerListAssetForSale() external {
-        vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-
-        // Verify listing price of the asset
-        assertEq(marketplace.floorPriceOf(assetNft, 0), assetPrice);
-    }
-
-    function testSellerListAssetForSaleVerifyEmittanceofEvent() external {
-        vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        // Verify emittance of AssetListedForSale
-        vm.expectEmit(true, true, true, true);
-        emit AssetListedForSale(assetNft, 0, assetPrice);
-
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-    }
-
-    function testSellerListAssetForSaleFailsOnNotOwner() public {
-        vm.prank(owner);
-        assetNft.safeMint(owner, 0, "hash");
-
-        vm.prank(alice);
+    function testOnlySellerCanListAnAssetAndSetSaleConditions() external {
         vm.expectRevert("NOT_OWNER");
-        marketplace.listAssetForSale(assetNft, 0, assetPrice);
-    }
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
 
-    function testSellerListAssetForSaleFailsOnZeroFloorPrice() public {
         vm.startPrank(owner);
-        assetNft.safeMint(owner, 0, "hash");
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
 
-        vm.expectRevert("ZERO_FLOOR_PRICE");
-        marketplace.listAssetForSale(assetNft, 0, 0);
+        ////////////////// Verify AssetListing values //////////////////
+
+        ////////////////// Verify SaleConditions values //////////////////
     }
 
-    /*//////////////////////////////////////////////////////////////
-                            BUY REQUEST AND APPROVAL
-    //////////////////////////////////////////////////////////////*/
-    //////////////////////// ISSUANCE //////////////////////////////
-    //////////////////////// APPROVAL //////////////////////////////
-    // TODO: prepare for future Deposit contract
+    function testApproveSaleAtFloorPriceFailsOnAssetNotListed() public {
+        vm.expectRevert("ASSET_NOT_LISTED");
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+    }
 
-    /*//////////////////////////////////////////////////////////////
-                            PRICE FLOOR UPDATE
-    //////////////////////////////////////////////////////////////*/
+    function testApproveSaleAtFloorPrice() public {
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+
+        ////////////////// Verify OfferAproval values //////////////////
+        (
+            address seller,
+            address buyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = marketplace.approvedOfferOf(assetNft);
+        assertEq(seller, owner);
+        assertEq(buyer, alice);
+        assertTrue(atFloorPrice);
+        assertEq(price, conditionsSetUp.floorPrice);
+        assertEq(approvalTimestamp, block.timestamp);
+        // SaleConditions.Conditions checks
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        // SaleConditions.ExtraSaleTerms checks
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
+
+        ////////////////// Verify Deposit values //////////////////
+        (
+            Deposit.DepositState memory state,
+            Deposit.ApprovalResume memory approval,
+            ,
+
+        ) = marketplace.depositedDataOf(assetNft);
+        // Deposit.DepositState checks
+        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
+        assertFalse(state.isAssetLocked);
+        // Deposit.ApprovalResume checks
+        assertEq(approval.seller, owner);
+        assertEq(approval.buyer, alice);
+        assertEq(approval.price, conditionsSetUp.floorPrice);
+    }
+
+    function testApproveSaleAtCustomPrice() public {
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        uint256 customPrice = 2590325 * 10**18;
+        marketplace.approveSale(
+            assetNft,
+            alice,
+            customPrice,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        ////////////////// Verify OfferAproval values //////////////////
+        (
+            address seller,
+            address buyer,
+            bool atFloorPrice,
+            uint256 price,
+            uint256 approvalTimestamp,
+            SaleConditions.Conditions memory conditions,
+            SaleConditions.ExtraSaleTerms memory extras,
+            bool ownerSignature
+        ) = marketplace.approvedOfferOf(assetNft);
+        assertEq(seller, owner);
+        assertEq(buyer, alice);
+        assertFalse(atFloorPrice);
+        // Price of the offer is not the floor price of the asset
+        assertFalse(price == conditions.floorPrice);
+        assertEq(price, customPrice);
+        assertEq(approvalTimestamp, block.timestamp);
+        // SaleConditions.Conditions checks
+        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(
+            conditions.paymentTerms.consummationSaleTimeframe,
+            conditionsSetUp.paymentTerms.consummationSaleTimeframe
+        );
+        // SaleConditions.ExtraSaleTerms checks
+        assertEq(extras.label, extrasSetUp.label);
+        assertEq(
+            extras.customTermDescription,
+            extrasSetUp.customTermDescription
+        );
+        assertTrue(ownerSignature);
+
+        ////////////////// Verify Deposit values //////////////////
+        (
+            Deposit.DepositState memory state,
+            Deposit.ApprovalResume memory approval,
+            ,
+
+        ) = marketplace.depositedDataOf(assetNft);
+        // Deposit.DepositState checks
+        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
+        assertFalse(state.isAssetLocked);
+        // Deposit.ApprovalResume checks
+        assertEq(approval.seller, owner);
+        assertEq(approval.buyer, alice);
+        assertEq(approval.price, customPrice);
+    }
+
+    function testBuyerWholeDepositFailsOnBuyerNotApproved() public {
+        (
+            ,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+        _createAssetOffer(mConditions, mExtras);
+
+        vm.expectRevert("BUYER_NOT_APPROVED");
+        marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
+    }
+
+    function testBuyerWholeDeposit() public {
+        _mintUSDCTo(alice, 6450592 * 10**18);
+
+        vm.startPrank(owner);
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        USDC.approve(address(marketplace), conditionsSetUp.floorPrice);
+        marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
+
+        ////////////////// Verify DepositData.BuyerData values //////////////////
+    }
+
+    function testResetSale() public {
+        NoEmptyValueTest noEmptyValue = new NoEmptyValueTest();
+        EmptyValueTest emptyValue = new EmptyValueTest();
+
+        _assetListingToAllDeposit();
+
+        noEmptyValue.verifiesAssetIsListed(marketplace, assetNft);
+        noEmptyValue.verifySaleCondtionsAreNotEmpty(marketplace, assetNft);
+        noEmptyValue.verifyAssetOfferAprovalIsNotEmpty(marketplace, assetNft);
+        noEmptyValue.verifyDepositDataAreNotEmpty(marketplace, assetNft);
+
+        marketplace.setSaleStateAsConsummated(assetNft);
+        marketplace.resetSaleAfterConsummation(assetNft);
+
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+    }
+
+    function testSaleConsummation() public {
+        _assetListingToAllDeposit();
+
+        marketplace.consummateSale(assetNft);
+
+        assertEq(
+            uint256(marketplace.saleStateOf(assetNft)),
+            uint256(Marketplace.SaleSate.Consummated)
+        );
+
+        EmptyValueTest emptyValue = new EmptyValueTest();
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+    }
+
+    function testSellerDepositAndConsummateSale() public {
+        // List asset with sale conditions
+        (
+            ListingLib.Status mstatus,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = _listAssetWithConditions();
+        // OfferApproval registration
+        OfferApproval.Approval memory mApproval = _createAssetOffer(
+            mConditions,
+            mExtras
+        );
+        // Deposit updates
+        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
+
+        vm.startPrank(owner);
+        assetNft.approve(address(marketplace), 0);
+        marketplace.sellerDepositAndConsummateSale(assetNft);
+
+        assertEq(
+            uint256(marketplace.saleStateOf(assetNft)),
+            uint256(Marketplace.SaleSate.Consummated)
+        );
+
+        EmptyValueTest emptyValue = new EmptyValueTest();
+        emptyValue.verifiesAssetIsNotListed(marketplace, assetNft);
+        emptyValue.verifySaleCondtionsAreEmpty(marketplace, assetNft);
+        emptyValue.verifyAssetOfferAprovalIsEmpty(marketplace, assetNft);
+        emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
+    }
 }

@@ -1,133 +1,208 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
 
+import "./libraries/ListingLib.sol";
 import {AssetNft} from "omnia-nft/AssetNft.sol";
+import {AssetListing} from "./AssetListing.sol";
+import {SaleConditions} from "./SaleConditions.sol";
+import {OfferApproval} from "./OfferApproval.sol";
+import {Deposit} from "./Deposit.sol";
 
 /**
- * @notice Marketplace to list an asset with a floor price defined by the owner while
- *        allowing the buyer to place a buy request at floor price.
- *              (or later to place new bid)
+ * @notice Marketplace is the orchestrator contract. It is responsible
+ *         to link all the contracts engaged in a sale from the listing
+ *         to the swap of assets (currency <-> NFTs).
  *
- *        Once the seller approves the buy (or bid) request, it triggers a dposit
- *        request.
+ *         It also registers the currencies accepted to buy NFTs.
+ *
+ * @dev Connects AssetListing, SaleConditions, AssetOfferAproval,
+ *      Deposit & SaleConsummation contracts together.
  */
-contract Marketplace {
-    /*//////////////////////////////////////////////////////////////
-                                 EVENTS
-    //////////////////////////////////////////////////////////////*/
-    event AssetListedForSale(
-        AssetNft assetNft,
-        uint256 assetId,
-        uint256 floorPrice
+contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
+    event SaleConsummated(
+        address indexed asset,
+        address indexed buyer,
+        SaleConditions indexed conditions,
+        Deposit deposit
     );
 
     /*//////////////////////////////////////////////////////////////
                                  CONSTANTS
     //////////////////////////////////////////////////////////////*/
     /// @dev USD price only has 2 decimals.
-    uint256 public constant USD_PRICE_DECIMAL = 10**2;
+    uint256 public constant FIAT_PRICE_DECIMAL = 10**2;
 
-    /*//////////////////////////////////////////////////////////////
-                                 PRICING LOGIC
-    //////////////////////////////////////////////////////////////*/
-    ///@dev AssetNft => Asset ID => Floor Price
-    mapping(AssetNft => mapping(uint256 => uint256)) public floorPriceOf;
+    enum SaleSate {
+        Null,
+        Processing,
+        Consummated,
+        Voided,
+        Cancelled
+    }
 
-    /*//////////////////////////////////////////////////////////////
-                                 MODIFIERS
-    //////////////////////////////////////////////////////////////*/
-    modifier onlyAssetOwner(AssetNft assetNft, uint256 assetId) {
-        require(assetNft.ownerOf(assetId) == msg.sender, "NOT_OWNER");
+    mapping(AssetNft => SaleSate) public saleStateOf;
+
+    modifier onlyListedAsset(AssetNft asset) {
+        require(
+            listingStatusOf[asset] == ListingLib.Status.ActiveListing,
+            "ASSET_NOT_LISTED"
+        );
         _;
     }
-    modifier priceAboveZero(uint256 price) {
-        require(price > 0, "ZERO_FLOOR_PRICE");
+
+    modifier noSaleInProcess(AssetNft asset) {
+        require(saleStateOf[asset] != SaleSate.Processing, "SALE_IN_PROCESS");
+        _;
+    }
+
+    modifier saleMustBeInProcess(AssetNft asset) {
+        require(
+            saleStateOf[asset] == SaleSate.Processing,
+            "SALE_NOT_IN_PROCESS"
+        );
+        _;
+    }
+
+    // TODO: implement logic to verify a sale has been voided
+    // TODO: Test the modifier on its on failure cases
+    modifier onSaleVoided(AssetNft asset) {
+        _;
+    }
+
+    // TODO: implement logic to verify a sale has been consummated
+    // TODO: Test the modifier on its on failure cases
+    modifier onSaleConsummated(AssetNft asset) {
+        require(
+            saleStateOf[asset] == SaleSate.Consummated,
+            "SALE_NOT_CONSUMMATED"
+        );
+        _;
+    }
+
+    // TODO: Test the modifier on its on failure cases, use `skip(25 hours);`
+    modifier saleConditionsMustBeMet(AssetNft asset) {
+        require(
+            (block.timestamp - approvedOfferOf[asset].approvalTimestamp) <=
+                saleConditionsOf[asset].paymentTerms.consummationSaleTimeframe,
+            "TIME_SALE_VOIDED"
+        );
         _;
     }
 
     /**
-     * @dev List an asset for sale with a floor price in USD.
-     *
-     * @param assetNft The asset contract from which the asset originates.
-     * @param assetId The asset ID of the exact asset to list for sale.
-     * @param floorPrice The floor price in USD.
-     *
-     * Requirements:
-     * - only the asset owner can list an asset for sale.
-     * - the asset price must be greater than 0.
+     * @notice List an asset for sale on the marketplace with compulsory sale conditions
+     *         and optional extra sale terms.
+     * @dev Merge `AssetListing` & `SaleConditions` logic.
      */
-    function listAssetForSale(
-        AssetNft assetNft,
-        uint256 assetId,
-        uint256 floorPrice
-    ) public onlyAssetOwner(assetNft, assetId) priceAboveZero(floorPrice) {
-        floorPriceOf[assetNft][assetId] = floorPrice;
-
-        emit AssetListedForSale(assetNft, assetId, floorPrice);
-    }
-
-    /**
-     * @dev The buyer places a buy request for an asset.
-     *
-     * Requirements:
-     * - only one buy request can be placed for an asset. Placing a new buy request
-     *   for an asset will overwrite the previous one.
-     * - a buy request can be placed only if a deposit has not been done or sale is
-     *   still going on.
-     * - the asset owner can not place a buy request.
-     */
-    function placeBuyRequest(AssetNft assetNft, uint256 assetId) public {}
-
-    /**
-     * @dev The seller approves the buy request of a buyer.
-     *
-     * Requirements:
-     * - only one single buy request can be approved at a time, which will triger a
-     *   deposit request to the buyer.
-     * - only the asset owner can approve a buy request.
-     */
-    function approveBuyRequest(
-        AssetNft assetNft,
-        uint256 assetId,
-        address buyer
+    function listAssetWithSaleConditions(
+        AssetNft asset,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
     ) public {
-        // TODO: Desposit contract: trigger buy request, the buyer has 24 hours to deposit the funds or the buy request will be automatically voided.
+        _listAsset(asset);
+        _setSaleConditions(asset, conditions, extras);
     }
 
+    // TODO: test edges cases with `noSaleInProcess`
     /**
-     * @dev The seller can void a buy request at any point in time by the seller,
-     *      until before the desposit request is opened.
+     * see documentation of: OfferApproval._approveSaleOfAtFloorPrice &
+     *                       Deposit._emitDepositAsk
+     * @notice Approve a buy request from a specific buyer for a specific NFT asset at floor
+     *      price.
+     * @dev `onlyListedAsset` verifies that the asset is listed, otherwise fails.
      */
-    function voidBuyRequest(
-        AssetNft assetNft,
-        uint256 assetId,
-        address buyer
-    ) public {}
+    function approveSale(
+        AssetNft asset,
+        address buyer,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) public onlyListedAsset(asset) noSaleInProcess(asset) {
+        _approveSaleOfAtFloorPrice(asset, buyer, conditions, extras);
+        _emitDepositAsk(asset, approvedOfferOf[asset]);
 
+        saleStateOf[asset] = SaleSate.Processing;
+    }
+
+    // TODO: test edges cases with `noSaleInProcess`
     /**
-     * @dev Update the floor price of an asset.
-     *
-     * @param assetNft The asset contract from which the asset originates.
-     * @param assetId The asset ID of the exact asset to list for sale.
-     * @param floorPrice The floor price in USD.
-     *
-     * Requirements:
-     * - once the seller has accepted a buy request from a buyer, the floor price can
-     *   not be updated, until either the buyer withdraws their offer or the sale
-     *   is terminated or consummated.
-     * - only the asset owner can list an asset for sale.
-     * - the asset price must be greater than 0.
+     * @notice Overload `approveSale` with custom price.
      */
-    function updateFloorPrice(
-        AssetNft assetNft,
-        uint256 assetId,
-        uint256 floorPrice
-    )
-        public
-        onlyAssetOwner(assetNft, assetId)
-        priceAboveZero(floorPrice)
-        returns (bool updated)
+    function approveSale(
+        AssetNft asset,
+        address buyer,
+        uint256 salePrice,
+        SaleConditions.Conditions memory conditions,
+        SaleConditions.ExtraSaleTerms memory extras
+    ) public onlyListedAsset(asset) noSaleInProcess(asset) {
+        _approveSaleOfAtCustomPrice(
+            asset,
+            buyer,
+            salePrice,
+            conditions,
+            extras
+        );
+        _emitDepositAsk(asset, approvedOfferOf[asset]);
+
+        saleStateOf[asset] = SaleSate.Processing;
+    }
+
+    // TODO: test edges cases with `noSaleInProcess`
+    function buyerWholeDepositERC20(
+        AssetNft asset,
+        address erc20,
+        string memory erc20Label
+    ) public saleMustBeInProcess(asset) {
+        _buyerWholeDepositERC20(asset, erc20, erc20Label);
+    }
+
+    // TODO: add event and test failure and edges cases
+    // TODO: add an attribute and update variables somewhere to mark this call as sale consummated
+    /**
+     * @notice Reset all data related to a sale of an asset.
+     * @dev All deposits (buyer and seller) must have been made and sale must be marked as
+     *      consummated.
+     */
+    function _resetSaleAfterConsummation(AssetNft asset)
+        internal
+        onSaleConsummated(asset)
     {
-        updated = false;
+        _unlistAsset(asset);
+        _resetSaleConditions(asset);
+        _resetAssetOfferApproval(asset);
+        _resetDepositData(asset);
+    }
+
+    // TODO: add event and test failure and edges cases
+    /**
+     * @notice Once all sale conditions are met, the sale of the asset is
+     *         consummated and the swap is instantly made. Each side wil
+     *         receive their respective assets.
+     *         All Data related to this sale will deleted and sale status updated.
+     *
+     * @dev For now SaleConditions can only fail on TIME_SALE_VOIDED
+     */
+    function _consummateSale(AssetNft asset)
+        internal
+        saleMustBeInProcess(asset)
+        saleConditionsMustBeMet(asset)
+    {
+        _swapAssets(asset);
+        saleStateOf[asset] = SaleSate.Consummated;
+        _resetSaleAfterConsummation(asset);
+    }
+
+    // TODO: add event and test failure and edges cases
+    /**
+     * @notice For now, when the seller deposits their `AssetNft` it will mark the sale as
+     *         consummated, as the buyer must deposit their `ERC20` before this happens.
+     * @dev The seller will not be able to deposit after the timeframe of SaleConditions
+     *      has passed because the sale must be consummated by then.
+     */
+    function sellerDepositAndConsummateSale(AssetNft asset)
+        external
+        onlyAssetOwner(asset)
+    {
+        _sellerDepositAssetNft(asset);
+        _consummateSale(asset);
     }
 }
