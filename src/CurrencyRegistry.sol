@@ -5,12 +5,14 @@ pragma solidity ^0.8.13;
  * @notice Save & update supported ERC20 as currency for exchange in the MArketplace.
  */
 contract CurrencyRegistry {
+    event CurrencyAdded(address currencyAddress, string ticker);
+
     mapping(string => address) public supportedCurrenciesAddress;
     mapping(address => string) public supportedCurrenciesTicker;
 
     function addCurrency(address _address, string memory _ticker) public {
         _addCurrency(_address, _ticker);
-        // emit event
+        emit CurrencyAdded(_address, _ticker);
     }
 
     function addCurrencies(address[] memory _address, string[] memory _ticker)
