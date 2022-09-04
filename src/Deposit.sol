@@ -130,6 +130,7 @@ abstract contract Deposit is ERC721TokenReceiver {
     ) internal onlyApprovedBuyer(asset) {
         uint256 transferAmount = depositedDataOf[asset].approval.price;
 
+        // TODO: implement Oracle to convert `transferAmount` USD into `erc20` amount.
         IERC20(erc20).transferFrom(msg.sender, address(this), transferAmount);
 
         depositedDataOf[asset].buyerData.currencyAddress = erc20;

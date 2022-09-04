@@ -7,6 +7,7 @@ import {AssetListing} from "./AssetListing.sol";
 import {SaleConditions} from "./SaleConditions.sol";
 import {OfferApproval} from "./OfferApproval.sol";
 import {Deposit} from "./Deposit.sol";
+import {CurrencyRegistry} from "./CurrencyRegistry.sol";
 
 /**
  * @notice Marketplace is the orchestrator contract. It is responsible
@@ -18,7 +19,13 @@ import {Deposit} from "./Deposit.sol";
  * @dev Connects AssetListing, SaleConditions, AssetOfferAproval,
  *      Deposit & SaleConsummation contracts together.
  */
-contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
+contract Marketplace is
+    AssetListing,
+    SaleConditions,
+    OfferApproval,
+    Deposit,
+    CurrencyRegistry
+{
     event SaleConsummated(
         address indexed asset,
         address indexed buyer,
@@ -151,7 +158,11 @@ contract Marketplace is AssetListing, SaleConditions, OfferApproval, Deposit {
         AssetNft asset,
         address erc20,
         string memory erc20Label
-    ) public saleMustBeInProcess(asset) {
+    )
+        public
+        saleMustBeInProcess(asset)
+        onlyRegisteredCurrency(erc20, erc20Label)
+    {
         _buyerWholeDepositERC20(asset, erc20, erc20Label);
     }
 

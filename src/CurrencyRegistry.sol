@@ -12,6 +12,14 @@ contract CurrencyRegistry is Ownable {
     mapping(string => address) public supportedCurrenciesAddress;
     mapping(address => string) public supportedCurrenciesTicker;
 
+    modifier onlyRegisteredCurrency(address currency, string memory ticker) {
+        require(
+            isCurrencyRegistered(currency, ticker),
+            "UNREGISTERED_CURRENCY"
+        );
+        _;
+    }
+
     function addCurrency(address _address, string memory _ticker) public {
         _addCurrency(_address, _ticker);
         emit CurrencyAdded(_address, _ticker);
