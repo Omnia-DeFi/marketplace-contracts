@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.13;
+import {Ownable} from "openzeppelin-contracts/access/Ownable.sol";
 
 /**
  * @notice Save & update supported ERC20 as currency for exchange in the MArketplace.
  */
-contract CurrencyRegistry {
+contract CurrencyRegistry is Ownable {
     event CurrencyAdded(address currencyAddress, string ticker);
     event CurrenciesAdded(address[] currencyAddress, string[] ticker);
 
@@ -31,10 +32,24 @@ contract CurrencyRegistry {
         public
         onlyOwner
     {
+        require(
+            !isCurrencyRegistered(_address, _ticker),
+            "CURRENCY_REGISTERED"
+        );
         require(_address != address(0), "ADDRESS_ZERO");
         require(bytes(_ticker).length > 0, "MISSING_LABEL");
 
         supportedCurrenciesAddress[_ticker] = _address;
         supportedCurrenciesTicker[_address] = _ticker;
+    }
+
+    function isCurrencyRegistered(address currency, string memory ticker)
+        public
+        view
+        returns (bool)
+    {
+        return
+            bytes(supportedCurrenciesTicker[currency]).length > 0 &&
+            supportedCurrenciesAddress[ticker] != address(0);
     }
 }
