@@ -5,7 +5,7 @@ import "forge-std/Test.sol";
 
 import {AssetNft, ListingLib, AssetListing, SaleConditions, OfferApproval, Deposit} from "../src/Marketplace.sol";
 import {MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
-import {MockMarketplace, Marketplace} from "./mock/MockMarketplace.sol";
+import {MockMarketplaceWithCurrency, Marketplace} from "./mock/MockMarketplaceWithCurrency.sol";
 import {MockDeposit} from "./mock/MockDeposit.sol";
 import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
 // utils
@@ -37,7 +37,7 @@ contract MarketplaceTest is Test {
     //////////////////////////////////////////////////////////////*/
     AssetNft public assetNft;
 
-    MockMarketplace marketplace;
+    MockMarketplaceWithCurrency marketplace;
     MockUSDC public immutable USDC = new MockUSDC();
     SaleConditions.Conditions conditionsSetUp;
     SaleConditions.ExtraSaleTerms extrasSetUp;
@@ -51,7 +51,7 @@ contract MarketplaceTest is Test {
     }
 
     function setUp() public {
-        marketplace = new MockMarketplace();
+        marketplace = new MockMarketplaceWithCurrency(address(USDC), "USDC");
         assetNft = new AssetNft("AssetMocked", "MA1", owner);
 
         vm.prank(owner);
@@ -329,6 +329,29 @@ contract MarketplaceTest is Test {
         vm.startPrank(alice);
         USDC.approve(address(marketplace), conditionsSetUp.floorPrice);
         marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
+
+        ////////////////// Verify DepositData.BuyerData values //////////////////
+    }
+
+    function testBuyerWholeDepositFailsOnUnregisteredCurrency() public {
+        MockUSDC USDC2 = new MockUSDC();
+
+        vm.startPrank(owner);
+        USDC2.mint(alice, 6450592 * 10**18);
+
+        marketplace.listAssetWithSaleConditions(
+            assetNft,
+            conditionsSetUp,
+            extrasSetUp
+        );
+
+        marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
+        vm.stopPrank();
+
+        vm.startPrank(alice);
+        USDC2.approve(address(marketplace), conditionsSetUp.floorPrice);
+        vm.expectRevert("UNREGISTERED_CURRENCY");
+        marketplace.buyerWholeDepositERC20(assetNft, address(USDC2), "USDC");
 
         ////////////////// Verify DepositData.BuyerData values //////////////////
     }
