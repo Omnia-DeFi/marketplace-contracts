@@ -6,6 +6,7 @@ pragma solidity ^0.8.13;
  */
 contract CurrencyRegistry {
     event CurrencyAdded(address currencyAddress, string ticker);
+    event CurrenciesAdded(address[] currencyAddress, string[] ticker);
 
     mapping(string => address) public supportedCurrenciesAddress;
     mapping(address => string) public supportedCurrenciesTicker;
@@ -15,17 +16,24 @@ contract CurrencyRegistry {
         emit CurrencyAdded(_address, _ticker);
     }
 
-    function addCurrencies(address[] memory _address, string[] memory _ticker)
-        public
-    {
-        require(_address.length == _ticker.length, "ARRAY_LENGTH");
-        for (uint256 i = 0; i < _address.length; i++) {
-            _addCurrency(_address[i], _ticker[i]);
+    function addCurrencies(
+        address[] memory _addresses,
+        string[] memory _tickers
+    ) public {
+        require(_addresses.length == _tickers.length, "ARRAY_LENGTH");
+        for (uint256 i = 0; i < _addresses.length; i++) {
+            _addCurrency(_addresses[i], _tickers[i]);
         }
-        // emit event
+        emit CurrenciesAdded(_addresses, _tickers);
     }
 
-    function _addCurrency(address _address, string memory _ticker) public {
+    function _addCurrency(address _address, string memory _ticker)
+        public
+        onlyOwner
+    {
+        require(_address != address(0), "ADDRESS_ZERO");
+        require(bytes(_ticker).length > 0, "MISSING_LABEL");
+
         supportedCurrenciesAddress[_ticker] = _address;
         supportedCurrenciesTicker[_address] = _ticker;
     }
