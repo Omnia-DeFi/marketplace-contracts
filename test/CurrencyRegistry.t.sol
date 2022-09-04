@@ -98,4 +98,37 @@ contract MockAssetListingTest is Test {
         vm.expectRevert("ARRAY_LENGTH");
         registry.addCurrencies(_addresses2, _tickers2);
     }
+
+    ////////////// TEST underlying `_addCurrency()` function //////////////
+    function testAddCurrencyFailsOnCallerIsNotOwner() public {
+        address _address = address(0x15239FEd28);
+        string memory _ticker = "ELSE";
+
+        vm.prank(alice);
+        vm.expectRevert("Ownable: caller is not the owner");
+        registry.mockInternalAddCurrency(_address, _ticker);
+
+        // verify test passes without prank
+        registry.mockInternalAddCurrency(_address, _ticker);
+    }
+
+    function testAddCurrencyFailsOnExisting() public {
+        registry.mockInternalAddCurrency(address(0x12345678), "TEST");
+
+        vm.expectRevert("CURRENCY_REGISTERED");
+        registry.mockInternalAddCurrency(address(0x12345678), "TEST");
+    }
+
+    function testAddCurrencyFailsOnAddressZero() public {
+        vm.expectRevert("ADDRESS_ZERO");
+        registry.mockInternalAddCurrency(address(0x0), "TEST");
+
+        vm.expectRevert("ADDRESS_ZERO");
+        registry.mockInternalAddCurrency(address(0), "TEST");
+    }
+
+    function testAddCurrencyFailsOnMissingLabel() public {
+        vm.expectRevert("MISSING_LABEL");
+        registry.mockInternalAddCurrency(address(0x12345678), "");
+    }
 }
