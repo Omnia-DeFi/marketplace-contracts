@@ -18,33 +18,12 @@ contract MockMarketplace is Marketplace {
         return listingStatusOf[asset];
     }
 
-    function mockSaleConditions(AssetNft asset)
-        public
-        returns (Conditions memory, ExtraSaleTerms memory)
-    {
-        Conditions memory conditions = Conditions(
-            1249014 * FIAT_PRICE_DECIMAL,
-            PaymentTerms(24 hours)
-        );
-        ExtraSaleTerms memory extras = ExtraSaleTerms(
-            "Label",
-            "Custom Description"
-        );
-
-        _setSaleConditions(asset, conditions, extras);
-
-        return (saleConditionsOf[asset], extraSaleConditionsOf[asset]);
-    }
-
-    function mockApproveSale(
+    function setSaleConditions(
         AssetNft asset,
-        address buyer,
-        SaleConditions.Conditions memory conditions,
-        SaleConditions.ExtraSaleTerms memory extras
-    ) public returns (OfferApproval.Approval memory) {
-        approveSale(asset, buyer, conditions, extras);
-
-        return approvedOfferOf[asset];
+        Conditions memory conditions,
+        ExtraSaleTerms memory extras
+    ) public {
+        _setSaleConditions(asset, conditions, extras);
     }
 
     function emitDepositAskAndBuyerDepositWithERC20Approved(

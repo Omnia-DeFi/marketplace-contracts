@@ -13,6 +13,7 @@ import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
 import {EmptyValueTest} from "./utils/EmptyValueTest.sol";
 import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
 import {CreateFetchDeposit} from "./utils/CreateFetchDeposit.sol";
+import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -66,7 +67,7 @@ contract MarketplaceTest is Test {
         createBaseSaleConditions();
     }
 
-    function _listAssetWithConditions()
+    function __listAssetWithConditions()
         internal
         returns (
             ListingLib.Status,
@@ -74,38 +75,38 @@ contract MarketplaceTest is Test {
             SaleConditions.ExtraSaleTerms memory
         )
     {
-        vm.startPrank(owner);
-
         ListingLib.Status mstatus = marketplace.mockAssetListing(assetNft);
         (
             SaleConditions.Conditions memory mConditions,
             SaleConditions.ExtraSaleTerms memory mExtras
-        ) = marketplace.mockSaleConditions(assetNft);
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
 
-        vm.stopPrank();
+        vm.prank(owner);
+        marketplace.setSaleConditions(assetNft, mConditions, mExtras);
 
         return (mstatus, mConditions, mExtras);
     }
 
-    function _createAssetOffer(
-        SaleConditions.Conditions memory mConditions,
-        SaleConditions.ExtraSaleTerms memory mExtras
-    ) internal returns (OfferApproval.Approval memory) {
-        vm.startPrank(owner);
-        OfferApproval.Approval memory mApproval = marketplace.mockApproveSale(
-            assetNft,
-            alice,
-            mConditions,
-            mExtras
-        );
-        vm.stopPrank();
+    function _createAssetOffer()
+        internal
+        returns (OfferApproval.Approval memory approval)
+    {
+        (
+            ,
+            SaleConditions.Conditions memory mConditions,
+            SaleConditions.ExtraSaleTerms memory mExtras
+        ) = __listAssetWithConditions();
 
-        return mApproval;
+        vm.prank(owner);
+        marketplace.approveSale(assetNft, alice, mConditions, mExtras);
+
+        approval = FetchOfferApproval.approvedOfferOf(marketplace, assetNft);
     }
 
-    function _buyerApproveMarketplaceAsSpenderAndDepositERC20(
-        OfferApproval.Approval memory mApproval
-    ) internal {
+    function _buyerApproveMarketplaceAsSpenderAndDepositERC20() internal {
+        OfferApproval.Approval memory mApproval = _createAssetOffer();
+        USDC.mint(alice, mApproval.price + (12940124 * 10**18));
+
         vm.startPrank(alice);
         IERC20(address(USDC)).approve(address(marketplace), mApproval.price);
         marketplace.emitDepositAskAndBuyerDepositWithERC20Approved(
@@ -125,21 +126,7 @@ contract MarketplaceTest is Test {
     }
 
     function _assetListingToAllDeposit() internal {
-        (
-            ListingLib.Status mstatus,
-            SaleConditions.Conditions memory mConditions,
-            SaleConditions.ExtraSaleTerms memory mExtras
-        ) = _listAssetWithConditions();
-
-        OfferApproval.Approval memory mApproval = _createAssetOffer(
-            mConditions,
-            mExtras
-        );
-
-        // Deposit updates
-        USDC.mint(alice, mApproval.price + (12940124 * 10**18));
-        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
-
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20();
         _sellerApproveMarketplaceAsSpenderAndDepositAssetNft();
     }
 
@@ -288,12 +275,7 @@ contract MarketplaceTest is Test {
     }
 
     function testBuyerWholeDepositFailsOnBuyerNotApproved() public {
-        (
-            ,
-            SaleConditions.Conditions memory mConditions,
-            SaleConditions.ExtraSaleTerms memory mExtras
-        ) = _listAssetWithConditions();
-        _createAssetOffer(mConditions, mExtras);
+        _createAssetOffer();
 
         vm.expectRevert("BUYER_NOT_APPROVED");
         marketplace.buyerWholeDepositERC20(assetNft, address(USDC), "USDC");
@@ -379,21 +361,12 @@ contract MarketplaceTest is Test {
         emptyValue.verifyDepositDataAreEmpty(marketplace, assetNft);
     }
 
+    /**
+     * @dev Verifies MArketplace public function `sellerDepositAndConsummateSale` works
+     *      correctly on its own.
+     */
     function testSellerDepositAndConsummateSale() public {
-        // List asset with sale conditions
-        (
-            ListingLib.Status mstatus,
-            SaleConditions.Conditions memory mConditions,
-            SaleConditions.ExtraSaleTerms memory mExtras
-        ) = _listAssetWithConditions();
-        // OfferApproval registration
-        OfferApproval.Approval memory mApproval = _createAssetOffer(
-            mConditions,
-            mExtras
-        );
-        // Deposit updates
-        USDC.mint(alice, mApproval.price + (12940124 * 10**18));
-        _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
+        _buyerApproveMarketplaceAsSpenderAndDepositERC20();
 
         vm.startPrank(owner);
         assetNft.approve(address(marketplace), 0);
