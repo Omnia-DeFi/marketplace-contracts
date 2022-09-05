@@ -11,9 +11,9 @@ import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
 // utils
 import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
 import {EmptyValueTest} from "./utils/EmptyValueTest.sol";
-import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
-import {CreateFetchDeposit} from "./utils/CreateFetchDeposit.sol";
-import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+import {OfferApprovalCreateFetch} from "./utils/OfferApprovalCreateFetch.sol";
+import {DepositCreateFetch} from "./utils/DepositCreateFetch.sol";
+import {SaleConditionsCreateFetch} from "./utils/SaleConditionsCreateFetch.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -79,7 +79,7 @@ contract MarketplaceTest is Test {
         (
             SaleConditions.Conditions memory mConditions,
             SaleConditions.ExtraSaleTerms memory mExtras
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
 
         vm.prank(owner);
         marketplace.setSaleConditions(assetNft, mConditions, mExtras);
@@ -100,7 +100,10 @@ contract MarketplaceTest is Test {
         vm.prank(owner);
         marketplace.approveSale(assetNft, alice, mConditions, mExtras);
 
-        approval = FetchOfferApproval.approvedOfferOf(marketplace, assetNft);
+        approval = OfferApprovalCreateFetch.approvedOfferOf(
+            marketplace,
+            assetNft
+        );
     }
 
     function _buyerApproveMarketplaceAsSpenderAndDepositERC20() internal {
@@ -174,10 +177,8 @@ contract MarketplaceTest is Test {
         marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
 
         ////////////////// Verify OfferAproval values //////////////////
-        OfferApproval.Approval memory appr = FetchOfferApproval.approvedOfferOf(
-            marketplace,
-            assetNft
-        );
+        OfferApproval.Approval memory appr = OfferApprovalCreateFetch
+            .approvedOfferOf(marketplace, assetNft);
         assertEq(appr.seller, owner);
         assertEq(appr.buyer, alice);
         assertTrue(appr.atFloorPrice);
@@ -198,7 +199,7 @@ contract MarketplaceTest is Test {
         assertTrue(appr.ownerSignature);
 
         ////////////////// Verify Deposit values //////////////////
-        Deposit.DepositData memory data = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory data = DepositCreateFetch.depositedDataOf(
             marketplace,
             assetNft
         );
@@ -232,10 +233,8 @@ contract MarketplaceTest is Test {
         );
 
         ////////////////// Verify OfferAproval values //////////////////
-        OfferApproval.Approval memory appr = FetchOfferApproval.approvedOfferOf(
-            marketplace,
-            assetNft
-        );
+        OfferApproval.Approval memory appr = OfferApprovalCreateFetch
+            .approvedOfferOf(marketplace, assetNft);
         assertEq(appr.seller, owner);
         assertEq(appr.buyer, alice);
         assertFalse(appr.atFloorPrice);
@@ -258,7 +257,7 @@ contract MarketplaceTest is Test {
         assertTrue(appr.ownerSignature);
 
         ////////////////// Verify Deposit values //////////////////
-        Deposit.DepositData memory data = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory data = DepositCreateFetch.depositedDataOf(
             marketplace,
             assetNft
         );

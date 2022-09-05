@@ -1,6 +1,6 @@
 import {Deposit, AssetNft, SaleConditions, OfferApproval} from "../../src/Deposit.sol";
 
-library CreateFetchDeposit {
+library DepositCreateFetch {
     function createDepositData(
         OfferApproval.Approval memory approval,
         address erc20Addrr,

@@ -1,6 +1,6 @@
 import {OfferApproval, AssetNft, SaleConditions} from "../../src/OfferApproval.sol";
 
-library FetchOfferApproval {
+library OfferApprovalCreateFetch {
     function createFloorPriceApproval(
         address seller,
         address buyer,

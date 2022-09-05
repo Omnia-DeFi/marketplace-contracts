@@ -8,8 +8,8 @@ import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
 import {MockOfferApproval, OfferApproval, SaleConditions} from "./mock/MockOfferApproval.sol";
 
-import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
-import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
+import {SaleConditionsCreateFetch} from "./utils/SaleConditionsCreateFetch.sol";
+import {OfferApprovalCreateFetch} from "./utils/OfferApprovalCreateFetch.sol";
 
 contract MockAssetListingTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -38,7 +38,7 @@ contract MockAssetListingTest is Test {
     address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
 
     function createBaseSaleConditions() public {
-        (conditionsSetUp, extrasSetUp) = CreateFetchSaleConditions
+        (conditionsSetUp, extrasSetUp) = SaleConditionsCreateFetch
             .createSpecificSaleConditions(
                 650000 * marketplace.FIAT_PRICE_DECIMAL(),
                 24 hours,
@@ -101,7 +101,7 @@ contract MockAssetListingTest is Test {
         );
 
         OfferApproval.Approval memory saved;
-        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
+        saved = OfferApprovalCreateFetch.approvedOfferOf(approval, nftAsset);
 
         assertEq(saved.seller, owner);
         assertEq(saved.buyer, buyer);
@@ -126,7 +126,7 @@ contract MockAssetListingTest is Test {
         vm.startPrank(owner);
 
         OfferApproval.Approval memory saved;
-        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
+        saved = OfferApprovalCreateFetch.approvedOfferOf(approval, nftAsset);
 
         // FIXME: second topic (saved) is not checked because it fails son "invalid log"
         //        the issue might be related to the fact that we create an
@@ -179,7 +179,7 @@ contract MockAssetListingTest is Test {
 
         // fetch saved offer approval
         OfferApproval.Approval memory saved;
-        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
+        saved = OfferApprovalCreateFetch.approvedOfferOf(approval, nftAsset);
 
         assertEq(saved.seller, owner);
         assertEq(saved.buyer, buyer);
@@ -206,7 +206,7 @@ contract MockAssetListingTest is Test {
         uint256 customPrice = 324015 * 100;
 
         OfferApproval.Approval memory approval_;
-        approval_ = FetchOfferApproval.createCustomPriceApproval(
+        approval_ = OfferApprovalCreateFetch.createCustomPriceApproval(
             owner,
             buyer,
             customPrice,

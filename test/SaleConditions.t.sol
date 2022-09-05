@@ -8,7 +8,7 @@ import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockSaleConditions, SaleConditions} from "./mock/MockSaleConditions.sol";
 import {SaleConditions} from "../src/SaleConditions.sol";
 
-import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+import {SaleConditionsCreateFetch} from "./utils/SaleConditionsCreateFetch.sol";
 
 contract MockSaleConditionsTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -46,7 +46,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Verify revert
         vm.expectRevert("NOT_OWNER");
         saleConditions.setSaleConditions(asset, conditions_, extras_);
@@ -87,7 +87,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
 
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         SaleConditions.ExtraSaleTerms memory extras_;
 
         // Label of extra terms too short, at least 4 characters required
@@ -108,7 +108,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
@@ -123,7 +123,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
 
         vm.expectEmit(true, true, true, true);
         emit SaleConditionsSet(asset, conditions_, extras_);
@@ -137,7 +137,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
@@ -145,7 +145,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory savedConditions,
             SaleConditions.ExtraSaleTerms memory savedExtras
-        ) = CreateFetchSaleConditions.saleConditionsOf(saleConditions, asset);
+        ) = SaleConditionsCreateFetch.saleConditionsOf(saleConditions, asset);
         // Conditions
         assertEq(savedConditions.floorPrice, conditions_.floorPrice);
         assertEq(

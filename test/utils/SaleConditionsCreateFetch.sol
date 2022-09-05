@@ -3,7 +3,7 @@ pragma solidity ^0.8.13;
 
 import {SaleConditions, AssetNft} from "../../src/SaleConditions.sol";
 
-library CreateFetchSaleConditions {
+library SaleConditionsCreateFetch {
     function createdDefaultSaleConditions()
         public
         view

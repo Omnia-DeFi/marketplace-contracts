@@ -9,9 +9,9 @@ import {MockUSDC} from "./mock/MockUSDC.sol";
 import {MockDeposit, Deposit, AssetNft, SaleConditions, OfferApproval} from "./mock/MockDeposit.sol";
 import {MockOfferApproval} from "./mock/MockOfferApproval.sol";
 
-import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
-import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
-import {CreateFetchDeposit} from "./utils/CreateFetchDeposit.sol";
+import {SaleConditionsCreateFetch} from "./utils/SaleConditionsCreateFetch.sol";
+import {OfferApprovalCreateFetch} from "./utils/OfferApprovalCreateFetch.sol";
+import {DepositCreateFetch} from "./utils/DepositCreateFetch.sol";
 
 contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -51,7 +51,7 @@ contract DepositTest is Test {
         internal
         returns (OfferApproval.Approval memory approval)
     {
-        (conditionsSetUp, extrasSetUp) = CreateFetchSaleConditions
+        (conditionsSetUp, extrasSetUp) = SaleConditionsCreateFetch
             .createdDefaultSaleConditions();
 
         vm.prank(owner);
@@ -63,7 +63,10 @@ contract DepositTest is Test {
             extrasSetUp
         );
         // fetch saved offer approval
-        approval = FetchOfferApproval.approvedOfferOf(offerApproval, nftAsset);
+        approval = OfferApprovalCreateFetch.approvedOfferOf(
+            offerApproval,
+            nftAsset
+        );
     }
 
     function _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
@@ -140,7 +143,7 @@ contract DepositTest is Test {
             );
 
         // fetch saved data
-        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory saved = DepositCreateFetch.depositedDataOf(
             deposit,
             nftAsset
         );
@@ -163,7 +166,7 @@ contract DepositTest is Test {
                 0
             );
 
-        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory saved = DepositCreateFetch.depositedDataOf(
             deposit,
             nftAsset
         );
@@ -205,7 +208,7 @@ contract DepositTest is Test {
             );
 
         // Verify DepositData update
-        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory saved = DepositCreateFetch.depositedDataOf(
             deposit,
             nftAsset
         );
@@ -233,7 +236,7 @@ contract DepositTest is Test {
                 6450592 * 10**18
             );
 
-        Deposit.DepositData memory depositData = CreateFetchDeposit
+        Deposit.DepositData memory depositData = DepositCreateFetch
             .createDepositData(approval, address(USDC), "USDC", false, 0);
 
         // Buyer makes the deposit
@@ -264,7 +267,7 @@ contract DepositTest is Test {
         assertEq(nftAsset.balanceOf(address(deposit)), 1);
 
         // Verify DepositData update
-        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+        Deposit.DepositData memory saved = DepositCreateFetch.depositedDataOf(
             deposit,
             nftAsset
         );
@@ -285,7 +288,7 @@ contract DepositTest is Test {
             );
 
         // Configuring DepositDat struct that should be emitted later
-        Deposit.DepositData memory depositData = CreateFetchDeposit
+        Deposit.DepositData memory depositData = DepositCreateFetch
             .createDepositData(approval, address(USDC), "USDC", true, 1);
 
         //vCheck event emittance
