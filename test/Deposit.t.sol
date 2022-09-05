@@ -47,7 +47,7 @@ contract DepositTest is Test {
     address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
     address randomWallet = 0x5DcB78343780E1B1e578ae0590dc1e868792a435;
 
-    function _createOfferApprovalWithCustomPrice()
+    function __createOfferApprovalWithCustomPrice()
         internal
         returns (OfferApproval.Approval memory approval)
     {
@@ -67,11 +67,12 @@ contract DepositTest is Test {
     }
 
     function _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
-        OfferApproval.Approval memory approval,
         uint256 usdcToBuyer
-    ) internal {
+    ) internal returns (OfferApproval.Approval memory appr) {
+        appr = __createOfferApprovalWithCustomPrice();
+
         // Simulate a deposit ask after an offer has been approved
-        deposit.emitDepositAsk(nftAsset, approval);
+        deposit.emitDepositAsk(nftAsset, appr);
 
         // Mints USDC to buyer
         USDC.mint(buyer, usdcToBuyer);
@@ -79,25 +80,22 @@ contract DepositTest is Test {
         assertEq(USDC.balanceOf(address(deposit)), 0);
     }
 
-    function _buyerDepositAfterDepositEmitted(
-        uint256 usdcToBuyer,
-        OfferApproval.Approval memory approval
-    ) internal {
-        _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
-            approval,
-            usdcToBuyer
-        );
+    function _buyerDepositAfterDepositEmitted(uint256 usdcToBuyer)
+        internal
+        returns (OfferApproval.Approval memory appr)
+    {
+        appr = _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(usdcToBuyer);
 
         // Buyer make deposit
         vm.prank(buyer);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
     }
 
-    function _sellerDepositAfterBuyerDeposit(
-        uint256 usdcToBuyer,
-        OfferApproval.Approval memory approval
-    ) internal {
-        _buyerDepositAfterDepositEmitted(usdcToBuyer, approval);
+    function _sellerDepositAfterBuyerDeposit(uint256 usdcToBuyer)
+        internal
+        returns (OfferApproval.Approval memory appr)
+    {
+        appr = _buyerDepositAfterDepositEmitted(usdcToBuyer);
         // Let seller deposit AssetNft
         vm.prank(owner);
         deposit.sellerDepositAssetNft(nftAsset);
@@ -136,9 +134,10 @@ contract DepositTest is Test {
      *      triggered.
      */
     function testDepositStateUpdateAfterDepositAskHasBeenTriggered() public {
-        OfferApproval.Approval memory approval;
-        approval = _createOfferApprovalWithCustomPrice();
-        _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(approval, 0);
+        OfferApproval.Approval
+            memory approval = _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
+                0
+            );
 
         // fetch saved data
         Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
@@ -160,8 +159,9 @@ contract DepositTest is Test {
     /// @dev Verifies emittance of DepositAsked event.
     function testEventEmittanceDepositAsked() public {
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-        _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(approval, 0);
+            memory approval = _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
+                0
+            );
 
         Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
             deposit,
@@ -180,8 +180,9 @@ contract DepositTest is Test {
     function testBuyerWholeDepositBuyerNotApproved() public {
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-        _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(approval, 0);
+            memory approval = _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
+                0
+            );
 
         vm.startPrank(randomWallet);
         // Deposit fails as `randomWallet` is not approved, only `buyer` is & fails before
@@ -199,9 +200,9 @@ contract DepositTest is Test {
     {
         uint256 usdcMintedToBuyer = 6450592 * 10**18;
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-
-        _buyerDepositAfterDepositEmitted(usdcMintedToBuyer, approval);
+            memory approval = _buyerDepositAfterDepositEmitted(
+                usdcMintedToBuyer
+            );
 
         // Verify DepositData update
         Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
@@ -228,11 +229,9 @@ contract DepositTest is Test {
     function testEventEmittanceBuyerDeposit() public {
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-        _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
-            approval,
-            6450592 * 10**18
-        );
+            memory approval = _emitDepositAskAfterOfferApprovalAndMintUSDCToBuyer(
+                6450592 * 10**18
+            );
 
         Deposit.DepositData memory depositData = CreateFetchDeposit
             .createDepositData(approval, address(USDC), "USDC", false, 0);
@@ -257,9 +256,9 @@ contract DepositTest is Test {
 
     function testSellerDepositAllAssetNftsAndVerifySavedValues() public {
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-
-        _sellerDepositAfterBuyerDeposit(325249033 * 10**18, approval);
+            memory approval = _sellerDepositAfterBuyerDeposit(
+                325249033 * 10**18
+            );
 
         // Deposit contract should have all AssetNft
         assertEq(nftAsset.balanceOf(address(deposit)), 1);
@@ -281,9 +280,9 @@ contract DepositTest is Test {
 
     function testEventEmittanceSellerDeposit() public {
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-
-        _buyerDepositAfterDepositEmitted(325249033 * 10**18, approval);
+            memory approval = _buyerDepositAfterDepositEmitted(
+                325249033 * 10**18
+            );
 
         // Configuring DepositDat struct that should be emitted later
         Deposit.DepositData memory depositData = CreateFetchDeposit
@@ -305,9 +304,9 @@ contract DepositTest is Test {
 
     function testSwapAssets() public {
         OfferApproval.Approval
-            memory approval = _createOfferApprovalWithCustomPrice();
-
-        _sellerDepositAfterBuyerDeposit(325249033 * 10**18, approval);
+            memory approval = _sellerDepositAfterBuyerDeposit(
+                325249033 * 10**18
+            );
 
         // Swap logic
         uint256 previousOwnerUSDC = USDC.balanceOf(owner);
