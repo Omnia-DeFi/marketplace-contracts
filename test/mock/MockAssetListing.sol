@@ -8,17 +8,4 @@ contract MockAssetListing is AssetListing {
     function listAsset(AssetNft asset) public {
         _listAsset(asset);
     }
-
-    function setUpWithMockedData(AssetNft asset)
-        public
-        returns (ListingLib.Status)
-    {
-        _setUpWithMockedData(asset);
-
-        return listingStatusOf[asset];
-    }
-
-    function _setUpWithMockedData(AssetNft asset) public {
-        listingStatusOf[asset] = ListingLib.Status.ActiveListing;
-    }
 }

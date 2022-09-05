@@ -13,24 +13,4 @@ contract MockSaleConditions is SaleConditions {
     ) public {
         _setSaleConditions(asset, conditions, extras);
     }
-
-    function setUpWithMockedData(AssetNft asset)
-        public
-        returns (Conditions memory, ExtraSaleTerms memory)
-    {
-        _setUpWithMockedData(asset);
-
-        return (saleConditionsOf[asset], extraSaleConditionsOf[asset]);
-    }
-
-    function _setUpWithMockedData(AssetNft asset) public {
-        saleConditionsOf[asset].floorPrice = 1249014 * DECIMALS;
-        saleConditionsOf[asset]
-            .paymentTerms
-            .consummationSaleTimeframe = 24 hours;
-
-        extraSaleConditionsOf[asset].label = "Label";
-        extraSaleConditionsOf[asset]
-            .customTermDescription = "Custom Description";
-    }
 }
