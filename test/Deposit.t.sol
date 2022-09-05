@@ -10,6 +10,7 @@ import {MockDeposit, Deposit, AssetNft, SaleConditions, OfferApproval} from "./m
 import {MockOfferApproval} from "./mock/MockOfferApproval.sol";
 
 import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
 
 contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -60,18 +61,8 @@ contract DepositTest is Test {
             conditionsSetUp,
             extrasSetUp
         );
-
         // fetch saved offer approval
-        (
-            approval.seller,
-            approval.buyer,
-            approval.atFloorPrice,
-            approval.price,
-            approval.approvalTimestamp,
-            approval.conditions,
-            approval.extras,
-            approval.ownerSignature
-        ) = offerApproval.approvedOfferOf(nftAsset);
+        approval = FetchOfferApproval.approvedOfferOf(offerApproval, nftAsset);
     }
 
     function setUp() public {

@@ -9,6 +9,7 @@ import {MockMarketplace} from "./mock/MockMarketplace.sol";
 import {MockOfferApproval, OfferApproval, SaleConditions} from "./mock/MockOfferApproval.sol";
 
 import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
 
 contract MockAssetListingTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -141,57 +142,40 @@ contract MockAssetListingTest is Test {
             extrasSetUp
         );
 
-        // fetch saved offer approval
-        (
-            address savedSeller,
-            address savedBuyer,
-            bool atFloorPrice,
-            uint256 price,
-            uint256 approvalTimestamp,
-            SaleConditions.Conditions memory conditions,
-            SaleConditions.ExtraSaleTerms memory extras,
-            bool ownerSignature
-        ) = approval.approvedOfferOf(nftAsset);
+        OfferApproval.Approval memory saved;
+        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
 
-        assertEq(savedSeller, owner);
-        assertEq(savedBuyer, buyer);
-        assertTrue(atFloorPrice);
-        assertEq(price, conditionsSetUp.floorPrice);
+        assertEq(saved.seller, owner);
+        assertEq(saved.buyer, buyer);
+        assertTrue(saved.atFloorPrice);
+        assertEq(saved.price, conditionsSetUp.floorPrice);
         // Allow 3s of delay, in case computation is slow
-        assertApproxEqAbs(approvalTimestamp, timestamp, 3);
-        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertApproxEqAbs(saved.approvalTimestamp, timestamp, 3);
+        assertEq(saved.conditions.floorPrice, conditionsSetUp.floorPrice);
         assertEq(
-            conditions.paymentTerms.consummationSaleTimeframe,
+            saved.conditions.paymentTerms.consummationSaleTimeframe,
             conditionsSetUp.paymentTerms.consummationSaleTimeframe
         );
-        assertEq(extras.label, extrasSetUp.label);
+        assertEq(saved.extras.label, extrasSetUp.label);
         assertEq(
-            extras.customTermDescription,
+            saved.extras.customTermDescription,
             extrasSetUp.customTermDescription
         );
-        assertTrue(ownerSignature);
+        assertTrue(saved.ownerSignature);
     }
 
     function testEventEmittanceOfferApprovedAtFloorPrice() external {
         vm.startPrank(owner);
 
-        OfferApproval.Approval memory approval_;
-        (
-            approval_.seller,
-            approval_.buyer,
-            approval_.atFloorPrice,
-            approval_.price,
-            approval_.approvalTimestamp,
-            approval_.conditions,
-            approval_.extras,
-            approval_.ownerSignature
-        ) = approval.approvedOfferOf(nftAsset);
-        // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
+        OfferApproval.Approval memory saved;
+        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
+
+        // FIXME: second topic (saved) is not checked because it fails son "invalid log"
         //        the issue might be related to the fact that we create an
         //        OfferApproval.Approval memory above which uses a different storage
         //        location than the one emitted in the event
         vm.expectEmit(true, false, true, true, address(approval));
-        emit OfferApprovedAtFloorPrice(nftAsset, approval_);
+        emit OfferApprovedAtFloorPrice(nftAsset, saved);
         approval.approveSaleOfAtFloorPrice(
             nftAsset,
             buyer,
@@ -216,34 +200,26 @@ contract MockAssetListingTest is Test {
         );
 
         // fetch saved offer approval
-        (
-            address savedSeller,
-            address savedBuyer,
-            bool atFloorPrice,
-            uint256 price,
-            uint256 approvalTimestamp,
-            SaleConditions.Conditions memory conditions,
-            SaleConditions.ExtraSaleTerms memory extras,
-            bool ownerSignature
-        ) = approval.approvedOfferOf(nftAsset);
+        OfferApproval.Approval memory saved;
+        saved = FetchOfferApproval.approvedOfferOf(approval, nftAsset);
 
-        assertEq(savedSeller, owner);
-        assertEq(savedBuyer, buyer);
-        assertFalse(atFloorPrice);
-        assertEq(price, customPrice);
+        assertEq(saved.seller, owner);
+        assertEq(saved.buyer, buyer);
+        assertFalse(saved.atFloorPrice);
+        assertEq(saved.price, customPrice);
         // Allow 3s of delay, in case computation is slow
-        assertApproxEqAbs(approvalTimestamp, timestamp, 3);
-        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertApproxEqAbs(saved.approvalTimestamp, timestamp, 3);
+        assertEq(saved.conditions.floorPrice, conditionsSetUp.floorPrice);
         assertEq(
-            conditions.paymentTerms.consummationSaleTimeframe,
+            saved.conditions.paymentTerms.consummationSaleTimeframe,
             conditionsSetUp.paymentTerms.consummationSaleTimeframe
         );
-        assertEq(extras.label, extrasSetUp.label);
+        assertEq(saved.extras.label, extrasSetUp.label);
         assertEq(
-            extras.customTermDescription,
+            saved.extras.customTermDescription,
             extrasSetUp.customTermDescription
         );
-        assertTrue(ownerSignature);
+        assertTrue(saved.ownerSignature);
     }
 
     function testEventEmittanceOfferApprovedAtCustomPrice() external {
@@ -252,14 +228,13 @@ contract MockAssetListingTest is Test {
         uint256 customPrice = 324015 * 100;
 
         OfferApproval.Approval memory approval_;
-        approval_.seller = owner;
-        approval_.buyer = buyer;
-        approval_.atFloorPrice = false;
-        approval_.price = customPrice;
-        approval_.approvalTimestamp = block.timestamp;
-        approval_.conditions = conditionsSetUp;
-        approval_.extras = extrasSetUp;
-        approval_.ownerSignature = true;
+        approval_ = FetchOfferApproval.createCustomPriceApproval(
+            owner,
+            buyer,
+            customPrice,
+            conditionsSetUp,
+            extrasSetUp
+        );
 
         // FIXME: second topic (approval_) is not checked because it fails son "invalid log"
         //        the issue might be related to the fact that we create an
