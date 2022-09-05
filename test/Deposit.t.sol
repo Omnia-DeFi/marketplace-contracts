@@ -78,6 +78,17 @@ contract DepositTest is Test {
             0,
             "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
         );
+
+        /**
+         * For test purposes we will allow deposit contract unlimited transfer access to
+         * USDC & AssetNft and no need to test this case as we use OpenZeppelin contracts
+         */
+        // USDC from buyer
+        vm.prank(buyer);
+        USDC.approve(address(deposit), 2**256 - 1); // unlimited allowance
+        // AssetNft from owner
+        vm.prank(owner);
+        nftAsset.approve(address(deposit), 0); // unlimited allowance
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -128,7 +139,8 @@ contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT FROM BUYER
     //////////////////////////////////////////////////////////////*/
-    function testOnlyApprovedBuyerCanMakeDeposit() public {
+    /// @dev Verifies only approved buyer can make a deposit.
+    function testBuyerWholeDepositBuyerNotApproved() public {
         USDC.mint(randomWallet, 6450592 * 10**18);
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
@@ -136,9 +148,6 @@ contract DepositTest is Test {
         deposit.emitDepositAsk(nftAsset, approval);
 
         vm.startPrank(randomWallet);
-
-        // Seller approves the deposit
-        USDC.approve(address(deposit), approval.price);
 
         // Deposit fails as `randomWallet` is not approved, only `buyer` is
         vm.expectRevert("BUYER_NOT_APPROVED");
@@ -164,12 +173,8 @@ contract DepositTest is Test {
         deposit.emitDepositAsk(nftAsset, approval);
 
         //////////////// BUYER ACTIONS ////////////////
-        vm.startPrank(buyer);
-        // Seller approves the deposit
-        USDC.approve(address(deposit), approval.price);
-        // Seller deposits USDC
+        vm.prank(buyer);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
-        vm.stopPrank();
 
         //////////////// RESULTS VERIFICATION ////////////////
         Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
@@ -204,9 +209,7 @@ contract DepositTest is Test {
             .createDepositData(approval, address(USDC), "USDC", false, 0);
 
         // Buyer makes the deposit
-        vm.startPrank(buyer);
-        // approve deposit contract
-        USDC.approve(address(deposit), approval.price);
+        vm.prank(buyer);
         vm.expectEmit(true, true, true, true);
         emit BuyerDeposit(nftAsset, depositData, block.timestamp);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
@@ -224,23 +227,19 @@ contract DepositTest is Test {
     }
 
     function testSellerDepositAllAssetNftsAndVerifySavedValues() public {
+        USDC.mint(buyer, 325249033 * 10**18);
         // Simulate deposit ask
         OfferApproval.Approval
             memory approval = _createOfferApprovalWithCustomPrice();
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
         //////////////// Let buyer deposit USDC ////////////////
-        USDC.mint(buyer, 325249033 * 10**18);
-        vm.startPrank(buyer);
-        // Seller approves the deposit
-        USDC.approve(address(deposit), approval.price);
+        vm.prank(buyer);
         // Seller deposits USDC
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
-        vm.stopPrank();
 
         //////////////// Let seller deposit AssetNft ////////////////
-        vm.startPrank(owner);
-        nftAsset.approve(address(deposit), 0);
+        vm.prank(owner);
         deposit.sellerDepositAssetNft(nftAsset);
         // Deposit contract should have all AssetNft
         assertEq(nftAsset.balanceOf(address(deposit)), 1);
@@ -261,6 +260,7 @@ contract DepositTest is Test {
     }
 
     function testEventEmittanceSellerDeposit() public {
+        USDC.mint(buyer, 325249033 * 10**18);
         //////////////// Deposit logic ////////////////
         // Simulate deposit ask
         OfferApproval.Approval
@@ -268,22 +268,16 @@ contract DepositTest is Test {
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
         // Let buyer deposit USDC
-        USDC.mint(buyer, 325249033 * 10**18);
-        vm.startPrank(buyer);
-        // Seller approves the deposit
-        USDC.approve(address(deposit), approval.price);
-        // Seller deposits USDC
+        vm.prank(buyer);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
-        vm.stopPrank();
 
         // Let seller deposit AssetNft
-        vm.startPrank(owner);
-        nftAsset.approve(address(deposit), 0);
         //////////////// Configuring structs ////////////////
         Deposit.DepositData memory depositData = CreateFetchDeposit
             .createDepositData(approval, address(USDC), "USDC", true, 1);
 
         //////////////// Check event emittance ////////////////
+        vm.prank(owner);
         vm.expectEmit(true, true, true, true);
         emit SellerDeposit(nftAsset, depositData, block.timestamp);
         deposit.sellerDepositAssetNft(nftAsset);
@@ -297,6 +291,7 @@ contract DepositTest is Test {
     }
 
     function testSwapAssets() public {
+        USDC.mint(buyer, 325249033 * 10**18);
         //////////////// Deposit logic ////////////////
         // Simulate deposit ask
         OfferApproval.Approval
@@ -304,16 +299,10 @@ contract DepositTest is Test {
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
         // Let buyer deposit USDC
-        USDC.mint(buyer, 325249033 * 10**18);
-        vm.startPrank(buyer);
-        // Seller approves the deposit
-        USDC.approve(address(deposit), approval.price);
-        // Seller deposits USDC
+        vm.prank(buyer);
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
-        vm.stopPrank();
         // Let seller deposit AssetNft
-        vm.startPrank(owner);
-        nftAsset.approve(address(deposit), 0);
+        vm.prank(owner);
         deposit.sellerDepositAssetNft(nftAsset);
 
         //////////////// Swap logic ////////////////
