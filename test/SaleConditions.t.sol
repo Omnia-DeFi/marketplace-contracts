@@ -41,6 +41,7 @@ contract MockSaleConditionsTest is Test {
         );
     }
 
+    /// @dev Fails on msg.sender != owner & then succeed on msg.sender == owner
     function testOnlyAssetOwnerCanSetSaleConditions() external {
         (
             SaleConditions.Conditions memory conditions_,
@@ -54,6 +55,11 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /**
+     * @dev Sale conditions format modifier fails on:
+     *      - floor price is not 0
+     *      - consummation timeframe of the sale is not at least 24h
+     */
     function testSetSaleConditionsFailsOnSaleConditionsFormatModifier()
         external
     {
@@ -70,6 +76,11 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /**
+     * @dev Extra terms of sale conditions format modifier fails on:
+     *      - label is not 4 chars
+     *      - descirption asociated to the label is not 4 chars
+     */
     function testSetSaleConditionsFailsOnExtraTermsFormatModifier() external {
         vm.startPrank(owner);
 
@@ -90,6 +101,7 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Exisiting conditions = Mininmal Conditions set (floor price & paymentTerms.consummationSaleTimeframe)
     function testSetSaleConditionsFailsOnExistingSaleConditions() external {
         vm.startPrank(owner);
 
@@ -104,6 +116,7 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Verifies SaleConditionsSet event is emitted with the right values
     function testEventEmittanceSaleConditionsSet() external {
         vm.startPrank(owner);
 
@@ -117,6 +130,7 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Fetches and verifies the sale conditions values after they have been set
     function testVerifySaleConditionsSavingValues() external {
         vm.startPrank(owner);
 
