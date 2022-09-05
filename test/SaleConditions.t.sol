@@ -8,6 +8,8 @@ import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockSaleConditions, SaleConditions} from "./mock/MockSaleConditions.sol";
 import {SaleConditions} from "../src/SaleConditions.sol";
 
+import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+
 contract MockSaleConditionsTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -26,20 +28,6 @@ contract MockSaleConditionsTest is Test {
     AssetNft asset;
     address immutable owner = msg.sender;
 
-    function returnCreatedSaleConditions()
-        public
-        returns (
-            SaleConditions.Conditions memory conditions_,
-            SaleConditions.ExtraSaleTerms memory extras_
-        )
-    {
-        conditions_.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
-        conditions_.paymentTerms.consummationSaleTimeframe = 24 hours;
-
-        extras_.label = "RandomLabel";
-        extras_.customTermDescription = "short";
-    }
-
     function setUp() public {
         marketplace = new MockMarketplace();
         asset = new AssetNft("AssetMocked", "MA1", owner);
@@ -57,7 +45,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
         // Verify revert
         vm.expectRevert("NOT_OWNER");
         saleConditions.setSaleConditions(asset, conditions_, extras_);
@@ -88,7 +76,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
 
-        ) = returnCreatedSaleConditions();
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
         SaleConditions.ExtraSaleTerms memory extras_;
 
         // Label of extra terms too short, at least 4 characters required
@@ -108,7 +96,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
@@ -122,7 +110,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
 
         vm.expectEmit(true, true, true, true);
         emit SaleConditionsSet(asset, conditions_, extras_);
@@ -135,27 +123,30 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = CreateFetchSaleConditions.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
-        // Conditions
+        // fetch saved SaleConditions
         (
-            uint256 savedFloorPrice,
-            SaleConditions.PaymentTerms memory paymentTerms
-        ) = saleConditions.saleConditionsOf(asset);
-        assertEq(savedFloorPrice, conditions_.floorPrice);
+            SaleConditions.Conditions memory savedConditions,
+            SaleConditions.ExtraSaleTerms memory savedExtras
+        ) = CreateFetchSaleConditions.fetchSaleConditionsOf(
+                saleConditions,
+                asset
+            );
+        // Conditions
+        assertEq(savedConditions.floorPrice, conditions_.floorPrice);
         assertEq(
-            paymentTerms.consummationSaleTimeframe,
+            savedConditions.paymentTerms.consummationSaleTimeframe,
             conditions_.paymentTerms.consummationSaleTimeframe
         );
-        //Extra terms
-        (
-            string memory savedLabel,
-            string memory savedeTermDescription
-        ) = saleConditions.extraSaleConditionsOf(asset);
-        assertEq(savedLabel, extras_.label);
-        assertEq(savedeTermDescription, extras_.customTermDescription);
+        // Extras
+        assertEq(savedExtras.label, extras_.label);
+        assertEq(
+            savedExtras.customTermDescription,
+            extras_.customTermDescription
+        );
     }
 
     //TODO: test _resetSaleConditions & SaleConditionsReset event emittance

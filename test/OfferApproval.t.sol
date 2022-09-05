@@ -8,6 +8,8 @@ import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockMarketplace} from "./mock/MockMarketplace.sol";
 import {MockOfferApproval, OfferApproval, SaleConditions} from "./mock/MockOfferApproval.sol";
 
+import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+
 contract MockAssetListingTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -35,8 +37,13 @@ contract MockAssetListingTest is Test {
     address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
 
     function createBaseSaleConditions() public {
-        conditionsSetUp.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
-        conditionsSetUp.paymentTerms.consummationSaleTimeframe = 24 hours;
+        (conditionsSetUp, extrasSetUp) = CreateFetchSaleConditions
+            .createSpecificSaleConditions(
+                650000 * marketplace.FIAT_PRICE_DECIMAL(),
+                24 hours,
+                "",
+                ""
+            );
     }
 
     function setUp() public {

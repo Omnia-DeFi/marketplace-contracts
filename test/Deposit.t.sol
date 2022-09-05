@@ -9,6 +9,8 @@ import {MockUSDC} from "./mock/MockUSDC.sol";
 import {MockDeposit, Deposit, AssetNft, SaleConditions, OfferApproval} from "./mock/MockDeposit.sol";
 import {MockOfferApproval} from "./mock/MockOfferApproval.sol";
 
+import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
+
 contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -36,6 +38,8 @@ contract DepositTest is Test {
     MockUSDC public immutable USDC = new MockUSDC();
     MockDeposit public deposit;
     MockOfferApproval public offerApproval;
+    SaleConditions.Conditions public conditionsSetUp;
+    SaleConditions.ExtraSaleTerms public extrasSetUp;
 
     address immutable owner = msg.sender;
     address buyer = 0x065e3DbaFCb2C26A978720f9eB4Bce6aD9D644a1;
@@ -43,23 +47,16 @@ contract DepositTest is Test {
 
     function _createOfferApprovalWithCustomPrice()
         internal
-        returns (OfferApproval.Approval memory)
+        returns (OfferApproval.Approval memory approval)
     {
-        vm.startPrank(owner);
-        uint256 customPrice = 324015 * 100;
-        uint256 timestamp = block.timestamp;
+        (conditionsSetUp, extrasSetUp) = CreateFetchSaleConditions
+            .createdDefaultSaleConditions();
 
-        SaleConditions.Conditions memory conditionsSetUp;
-        SaleConditions.ExtraSaleTerms memory extrasSetUp;
-        OfferApproval.Approval memory approval;
-
-        conditionsSetUp.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
-        conditionsSetUp.paymentTerms.consummationSaleTimeframe = 24 hours;
-
+        vm.prank(owner);
         offerApproval.approveSaleOfAtCustomPrice(
             nftAsset,
             buyer,
-            customPrice,
+            324015 * 100,
             conditionsSetUp,
             extrasSetUp
         );
@@ -75,10 +72,6 @@ contract DepositTest is Test {
             approval.extras,
             approval.ownerSignature
         ) = offerApproval.approvedOfferOf(nftAsset);
-
-        vm.stopPrank();
-
-        return approval;
     }
 
     function setUp() public {
