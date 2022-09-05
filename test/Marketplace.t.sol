@@ -11,6 +11,8 @@ import {MockUSDC, IERC20} from "./mock/MockUSDC.sol";
 // utils
 import {NoEmptyValueTest} from "./utils/NoEmptyValueTest.sol";
 import {EmptyValueTest} from "./utils/EmptyValueTest.sol";
+import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
+import {CreateFetchDeposit} from "./utils/CreateFetchDeposit.sol";
 
 contract MarketplaceTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -185,49 +187,44 @@ contract MarketplaceTest is Test {
         marketplace.approveSale(assetNft, alice, conditionsSetUp, extrasSetUp);
 
         ////////////////// Verify OfferAproval values //////////////////
-        (
-            address seller,
-            address buyer,
-            bool atFloorPrice,
-            uint256 price,
-            uint256 approvalTimestamp,
-            SaleConditions.Conditions memory conditions,
-            SaleConditions.ExtraSaleTerms memory extras,
-            bool ownerSignature
-        ) = marketplace.approvedOfferOf(assetNft);
-        assertEq(seller, owner);
-        assertEq(buyer, alice);
-        assertTrue(atFloorPrice);
-        assertEq(price, conditionsSetUp.floorPrice);
-        assertEq(approvalTimestamp, block.timestamp);
+        OfferApproval.Approval memory appr = FetchOfferApproval.approvedOfferOf(
+            marketplace,
+            assetNft
+        );
+        assertEq(appr.seller, owner);
+        assertEq(appr.buyer, alice);
+        assertTrue(appr.atFloorPrice);
+        assertEq(appr.price, conditionsSetUp.floorPrice);
+        assertEq(appr.approvalTimestamp, block.timestamp);
         // SaleConditions.Conditions checks
-        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(appr.conditions.floorPrice, conditionsSetUp.floorPrice);
         assertEq(
-            conditions.paymentTerms.consummationSaleTimeframe,
+            appr.conditions.paymentTerms.consummationSaleTimeframe,
             conditionsSetUp.paymentTerms.consummationSaleTimeframe
         );
         // SaleConditions.ExtraSaleTerms checks
-        assertEq(extras.label, extrasSetUp.label);
+        assertEq(appr.extras.label, extrasSetUp.label);
         assertEq(
-            extras.customTermDescription,
+            appr.extras.customTermDescription,
             extrasSetUp.customTermDescription
         );
-        assertTrue(ownerSignature);
+        assertTrue(appr.ownerSignature);
 
         ////////////////// Verify Deposit values //////////////////
-        (
-            Deposit.DepositState memory state,
-            Deposit.ApprovalResume memory approval,
-            ,
-
-        ) = marketplace.depositedDataOf(assetNft);
+        Deposit.DepositData memory data = CreateFetchDeposit.depositedDataOf(
+            marketplace,
+            assetNft
+        );
         // Deposit.DepositState checks
-        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
-        assertFalse(state.isAssetLocked);
+        assertEq(
+            uint256(data.state.status),
+            uint256(Deposit.DepositStatus.Pending)
+        );
+        assertFalse(data.state.isAssetLocked);
         // Deposit.ApprovalResume checks
-        assertEq(approval.seller, owner);
-        assertEq(approval.buyer, alice);
-        assertEq(approval.price, conditionsSetUp.floorPrice);
+        assertEq(data.approval.seller, owner);
+        assertEq(data.approval.buyer, alice);
+        assertEq(data.approval.price, conditionsSetUp.floorPrice);
     }
 
     function testApproveSaleAtCustomPrice() public {
@@ -248,51 +245,46 @@ contract MarketplaceTest is Test {
         );
 
         ////////////////// Verify OfferAproval values //////////////////
-        (
-            address seller,
-            address buyer,
-            bool atFloorPrice,
-            uint256 price,
-            uint256 approvalTimestamp,
-            SaleConditions.Conditions memory conditions,
-            SaleConditions.ExtraSaleTerms memory extras,
-            bool ownerSignature
-        ) = marketplace.approvedOfferOf(assetNft);
-        assertEq(seller, owner);
-        assertEq(buyer, alice);
-        assertFalse(atFloorPrice);
+        OfferApproval.Approval memory appr = FetchOfferApproval.approvedOfferOf(
+            marketplace,
+            assetNft
+        );
+        assertEq(appr.seller, owner);
+        assertEq(appr.buyer, alice);
+        assertFalse(appr.atFloorPrice);
         // Price of the offer is not the floor price of the asset
-        assertFalse(price == conditions.floorPrice);
-        assertEq(price, customPrice);
-        assertEq(approvalTimestamp, block.timestamp);
+        assertFalse(appr.price == appr.conditions.floorPrice);
+        assertEq(appr.price, customPrice);
+        assertEq(appr.approvalTimestamp, block.timestamp);
         // SaleConditions.Conditions checks
-        assertEq(conditions.floorPrice, conditionsSetUp.floorPrice);
+        assertEq(appr.conditions.floorPrice, conditionsSetUp.floorPrice);
         assertEq(
-            conditions.paymentTerms.consummationSaleTimeframe,
+            appr.conditions.paymentTerms.consummationSaleTimeframe,
             conditionsSetUp.paymentTerms.consummationSaleTimeframe
         );
         // SaleConditions.ExtraSaleTerms checks
-        assertEq(extras.label, extrasSetUp.label);
+        assertEq(appr.extras.label, extrasSetUp.label);
         assertEq(
-            extras.customTermDescription,
+            appr.extras.customTermDescription,
             extrasSetUp.customTermDescription
         );
-        assertTrue(ownerSignature);
+        assertTrue(appr.ownerSignature);
 
         ////////////////// Verify Deposit values //////////////////
-        (
-            Deposit.DepositState memory state,
-            Deposit.ApprovalResume memory approval,
-            ,
-
-        ) = marketplace.depositedDataOf(assetNft);
+        Deposit.DepositData memory data = CreateFetchDeposit.depositedDataOf(
+            marketplace,
+            assetNft
+        );
         // Deposit.DepositState checks
-        assertEq(uint256(state.status), uint256(Deposit.DepositStatus.Pending));
-        assertFalse(state.isAssetLocked);
+        assertEq(
+            uint256(data.state.status),
+            uint256(Deposit.DepositStatus.Pending)
+        );
+        assertFalse(data.state.isAssetLocked);
         // Deposit.ApprovalResume checks
-        assertEq(approval.seller, owner);
-        assertEq(approval.buyer, alice);
-        assertEq(approval.price, customPrice);
+        assertEq(data.approval.seller, owner);
+        assertEq(data.approval.buyer, alice);
+        assertEq(data.approval.price, customPrice);
     }
 
     function testBuyerWholeDepositFailsOnBuyerNotApproved() public {
