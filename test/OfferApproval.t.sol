@@ -60,48 +60,6 @@ contract MockAssetListingTest is Test {
         );
     }
 
-    function testOnlyOwnerCanApproveAnOfferAtFloorPrice() external {
-        vm.startPrank(owner);
-        approval.approveSaleOfAtFloorPrice(
-            nftAsset,
-            buyer,
-            conditionsSetUp,
-            extrasSetUp
-        );
-    }
-
-    function testOnlyOwnerCanApproveAnOfferAtCustomPrice() external {
-        vm.startPrank(owner);
-        approval.approveSaleOfAtCustomPrice(
-            nftAsset,
-            buyer,
-            8902342 * 100,
-            conditionsSetUp,
-            extrasSetUp
-        );
-    }
-
-    function testOfferApprovalAtFloorPriceFailsOnNotOwner() external {
-        vm.expectRevert("NOT_OWNER");
-        approval.approveSaleOfAtFloorPrice(
-            nftAsset,
-            buyer,
-            conditionsSetUp,
-            extrasSetUp
-        );
-    }
-
-    function testOfferApprovalAtCustomPriceFailsOnNotOwner() external {
-        vm.expectRevert("NOT_OWNER");
-        approval.approveSaleOfAtCustomPrice(
-            nftAsset,
-            buyer,
-            8902342 * 100,
-            conditionsSetUp,
-            extrasSetUp
-        );
-    }
-
     // Floor price or custom price offer, once one has been been approved no other offer
     // can be approved.
     function testOnlyOneOfferApprovalPerAsset() external {
@@ -184,6 +142,26 @@ contract MockAssetListingTest is Test {
         );
     }
 
+    function testOnlyOwnerCanApproveAnOfferAtFloorPrice() external {
+        vm.startPrank(owner);
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
+
+    function testOfferApprovalAtFloorPriceFailsOnNotOwner() external {
+        vm.expectRevert("NOT_OWNER");
+        approval.approveSaleOfAtFloorPrice(
+            nftAsset,
+            buyer,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
+
     /*//////////////////////////////////////////////////////////////
 						  CUSTOM PRICE
 	//////////////////////////////////////////////////////////////*/
@@ -251,6 +229,28 @@ contract MockAssetListingTest is Test {
         );
         // verify timestamp registered in OfferApproval is the same thena the one in this test
         assertEq(approval_.approvalTimestamp, approval.savedTimestamp());
+    }
+
+    function testOnlyOwnerCanApproveAnOfferAtCustomPrice() external {
+        vm.startPrank(owner);
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            8902342 * 100,
+            conditionsSetUp,
+            extrasSetUp
+        );
+    }
+
+    function testOfferApprovalAtCustomPriceFailsOnNotOwner() external {
+        vm.expectRevert("NOT_OWNER");
+        approval.approveSaleOfAtCustomPrice(
+            nftAsset,
+            buyer,
+            8902342 * 100,
+            conditionsSetUp,
+            extrasSetUp
+        );
     }
 
     //TODO: test _resetAssetOfferApproval & OfferApprovalReset event emittance
