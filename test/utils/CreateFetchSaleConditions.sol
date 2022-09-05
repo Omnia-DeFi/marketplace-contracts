@@ -39,7 +39,7 @@ library CreateFetchSaleConditions {
         extras.customTermDescription = description;
     }
 
-    function fetchSaleConditionsOf(SaleConditions sale, AssetNft asset)
+    function saleConditionsOf(SaleConditions sale, AssetNft asset)
         public
         view
         returns (

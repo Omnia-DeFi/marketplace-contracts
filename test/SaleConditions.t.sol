@@ -145,10 +145,7 @@ contract MockSaleConditionsTest is Test {
         (
             SaleConditions.Conditions memory savedConditions,
             SaleConditions.ExtraSaleTerms memory savedExtras
-        ) = CreateFetchSaleConditions.fetchSaleConditionsOf(
-                saleConditions,
-                asset
-            );
+        ) = CreateFetchSaleConditions.saleConditionsOf(saleConditions, asset);
         // Conditions
         assertEq(savedConditions.floorPrice, conditions_.floorPrice);
         assertEq(
