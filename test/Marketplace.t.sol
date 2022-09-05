@@ -64,12 +64,6 @@ contract MarketplaceTest is Test {
         createBaseSaleConditions();
     }
 
-    function _mintUSDCTo(address to, uint256 amount) internal {
-        // Owner mints USDC to buyer
-        vm.prank(owner);
-        USDC.mint(to, amount);
-    }
-
     function _listAssetWithConditions()
         internal
         returns (
@@ -141,7 +135,7 @@ contract MarketplaceTest is Test {
         );
 
         // Deposit updates
-        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        USDC.mint(alice, mApproval.price + (12940124 * 10**18));
         _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
 
         _sellerApproveMarketplaceAsSpenderAndDepositAssetNft();
@@ -314,7 +308,7 @@ contract MarketplaceTest is Test {
     }
 
     function testBuyerWholeDeposit() public {
-        _mintUSDCTo(alice, 6450592 * 10**18);
+        USDC.mint(alice, 6450592 * 10**18);
 
         vm.startPrank(owner);
         marketplace.listAssetWithSaleConditions(
@@ -406,7 +400,7 @@ contract MarketplaceTest is Test {
             mExtras
         );
         // Deposit updates
-        _mintUSDCTo(alice, mApproval.price + (12940124 * 10**18));
+        USDC.mint(alice, mApproval.price + (12940124 * 10**18));
         _buyerApproveMarketplaceAsSpenderAndDepositERC20(mApproval);
 
         vm.startPrank(owner);

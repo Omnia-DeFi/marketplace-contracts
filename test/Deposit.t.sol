@@ -79,18 +79,6 @@ contract DepositTest is Test {
         );
     }
 
-    function _mintUSDCTo(address to, uint256 amount) internal {
-        // Owner mints USDC to buyer
-        vm.prank(owner);
-        USDC.mint(to, amount);
-    }
-
-    // Verify mint function once and for all
-    function testMintUSDTo() public {
-        _mintUSDCTo(buyer, 100);
-        assertEq(USDC.balanceOf(buyer), 100);
-    }
-
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT ASK
     //////////////////////////////////////////////////////////////*/
@@ -144,7 +132,7 @@ contract DepositTest is Test {
                                  DEPOSIT FROM BUYER
     //////////////////////////////////////////////////////////////*/
     function testOnlyApprovedBuyerCanMakeDeposit() public {
-        _mintUSDCTo(randomWallet, 6450592 * 10**18);
+        USDC.mint(randomWallet, 6450592 * 10**18);
 
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
@@ -166,7 +154,7 @@ contract DepositTest is Test {
     {
         // Mints USDC to buyer
         uint256 usdcMintedToBuyer = 6450592 * 10**18;
-        _mintUSDCTo(buyer, usdcMintedToBuyer);
+        USDC.mint(buyer, usdcMintedToBuyer);
         // Verify USDC balance of deposit contract == 0
         assertEq(USDC.balanceOf(address(deposit)), 0);
 
@@ -217,7 +205,7 @@ contract DepositTest is Test {
     }
 
     function testEventEmittanceBuyerDeposit() public {
-        _mintUSDCTo(buyer, 6450592 * 10**18);
+        USDC.mint(buyer, 6450592 * 10**18);
 
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
@@ -266,7 +254,7 @@ contract DepositTest is Test {
         /*//////////////////////////////////////////////////////////////
                             Let buyer deposit USDC
         //////////////////////////////////////////////////////////////*/
-        _mintUSDCTo(buyer, 325249033 * 10**18);
+        USDC.mint(buyer, 325249033 * 10**18);
         vm.startPrank(buyer);
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
@@ -309,7 +297,7 @@ contract DepositTest is Test {
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
         // Let buyer deposit USDC
-        _mintUSDCTo(buyer, 325249033 * 10**18);
+        USDC.mint(buyer, 325249033 * 10**18);
         vm.startPrank(buyer);
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
@@ -357,7 +345,7 @@ contract DepositTest is Test {
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
         // Let buyer deposit USDC
-        _mintUSDCTo(buyer, 325249033 * 10**18);
+        USDC.mint(buyer, 325249033 * 10**18);
         vm.startPrank(buyer);
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
