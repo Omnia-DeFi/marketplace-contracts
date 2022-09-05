@@ -32,37 +32,4 @@ contract MockOfferApproval is OfferApproval {
         );
         savedTimestamp = block.timestamp;
     }
-
-    function setUpWithMockedData(
-        AssetNft asset,
-        address seller,
-        address buyer,
-        SaleConditions.Conditions memory conditions,
-        SaleConditions.ExtraSaleTerms memory extras
-    ) public returns (Approval memory) {
-        _setUpWithMockedData(asset, seller, buyer, conditions, extras);
-
-        return (approvedOfferOf[asset]);
-    }
-
-    function _setUpWithMockedData(
-        AssetNft asset,
-        address seller,
-        address buyer,
-        SaleConditions.Conditions memory conditions,
-        SaleConditions.ExtraSaleTerms memory extras
-    ) public {
-        approvedOfferOf[asset].seller = seller;
-        approvedOfferOf[asset].buyer = buyer;
-        // price
-        approvedOfferOf[asset].atFloorPrice = true;
-        approvedOfferOf[asset].price = conditions.floorPrice;
-        // timestamp
-        approvedOfferOf[asset].approvalTimestamp = block.timestamp;
-        // SaleConditions
-        approvedOfferOf[asset].conditions = conditions;
-        approvedOfferOf[asset].extras = extras;
-        // Approval from owner
-        approvedOfferOf[asset].ownerSignature = true;
-    }
 }

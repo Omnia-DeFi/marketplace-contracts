@@ -8,6 +8,8 @@ import {AssetNft, MockAssetNft} from "./mock/MockAssetNftMintOnDeployment.sol";
 import {MockSaleConditions, SaleConditions} from "./mock/MockSaleConditions.sol";
 import {SaleConditions} from "../src/SaleConditions.sol";
 
+import {SaleConditionsCreateFetch} from "./utils/SaleConditionsCreateFetch.sol";
+
 contract MockSaleConditionsTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  EVENTS
@@ -26,20 +28,6 @@ contract MockSaleConditionsTest is Test {
     AssetNft asset;
     address immutable owner = msg.sender;
 
-    function returnCreatedSaleConditions()
-        public
-        returns (
-            SaleConditions.Conditions memory conditions_,
-            SaleConditions.ExtraSaleTerms memory extras_
-        )
-    {
-        conditions_.floorPrice = 650000 * marketplace.FIAT_PRICE_DECIMAL();
-        conditions_.paymentTerms.consummationSaleTimeframe = 24 hours;
-
-        extras_.label = "RandomLabel";
-        extras_.customTermDescription = "short";
-    }
-
     function setUp() public {
         marketplace = new MockMarketplace();
         asset = new AssetNft("AssetMocked", "MA1", owner);
@@ -53,11 +41,12 @@ contract MockSaleConditionsTest is Test {
         );
     }
 
+    /// @dev Fails on msg.sender != owner & then succeed on msg.sender == owner
     function testOnlyAssetOwnerCanSetSaleConditions() external {
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Verify revert
         vm.expectRevert("NOT_OWNER");
         saleConditions.setSaleConditions(asset, conditions_, extras_);
@@ -66,6 +55,11 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /**
+     * @dev Sale conditions format modifier fails on:
+     *      - floor price is not 0
+     *      - consummation timeframe of the sale is not at least 24h
+     */
     function testSetSaleConditionsFailsOnSaleConditionsFormatModifier()
         external
     {
@@ -82,13 +76,18 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /**
+     * @dev Extra terms of sale conditions format modifier fails on:
+     *      - label is not 4 chars
+     *      - descirption asociated to the label is not 4 chars
+     */
     function testSetSaleConditionsFailsOnExtraTermsFormatModifier() external {
         vm.startPrank(owner);
 
         (
             SaleConditions.Conditions memory conditions_,
 
-        ) = returnCreatedSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         SaleConditions.ExtraSaleTerms memory extras_;
 
         // Label of extra terms too short, at least 4 characters required
@@ -102,13 +101,14 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Exisiting conditions = Mininmal Conditions set (floor price & paymentTerms.consummationSaleTimeframe)
     function testSetSaleConditionsFailsOnExistingSaleConditions() external {
         vm.startPrank(owner);
 
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
@@ -116,46 +116,48 @@ contract MockSaleConditionsTest is Test {
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Verifies SaleConditionsSet event is emitted with the right values
     function testEventEmittanceSaleConditionsSet() external {
         vm.startPrank(owner);
 
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
 
         vm.expectEmit(true, true, true, true);
         emit SaleConditionsSet(asset, conditions_, extras_);
         saleConditions.setSaleConditions(asset, conditions_, extras_);
     }
 
+    /// @dev Fetches and verifies the sale conditions values after they have been set
     function testVerifySaleConditionsSavingValues() external {
         vm.startPrank(owner);
 
         (
             SaleConditions.Conditions memory conditions_,
             SaleConditions.ExtraSaleTerms memory extras_
-        ) = returnCreatedSaleConditions();
+        ) = SaleConditionsCreateFetch.createdDefaultSaleConditions();
         // Set conditions a first, to trigger the revert below
         saleConditions.setSaleConditions(asset, conditions_, extras_);
 
-        // Conditions
+        // fetch saved SaleConditions
         (
-            uint256 savedFloorPrice,
-            SaleConditions.PaymentTerms memory paymentTerms
-        ) = saleConditions.saleConditionsOf(asset);
-        assertEq(savedFloorPrice, conditions_.floorPrice);
+            SaleConditions.Conditions memory savedConditions,
+            SaleConditions.ExtraSaleTerms memory savedExtras
+        ) = SaleConditionsCreateFetch.saleConditionsOf(saleConditions, asset);
+        // Conditions
+        assertEq(savedConditions.floorPrice, conditions_.floorPrice);
         assertEq(
-            paymentTerms.consummationSaleTimeframe,
+            savedConditions.paymentTerms.consummationSaleTimeframe,
             conditions_.paymentTerms.consummationSaleTimeframe
         );
-        //Extra terms
-        (
-            string memory savedLabel,
-            string memory savedeTermDescription
-        ) = saleConditions.extraSaleConditionsOf(asset);
-        assertEq(savedLabel, extras_.label);
-        assertEq(savedeTermDescription, extras_.customTermDescription);
+        // Extras
+        assertEq(savedExtras.label, extras_.label);
+        assertEq(
+            savedExtras.customTermDescription,
+            extras_.customTermDescription
+        );
     }
 
     //TODO: test _resetSaleConditions & SaleConditionsReset event emittance
