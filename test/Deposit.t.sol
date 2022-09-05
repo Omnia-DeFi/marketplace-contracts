@@ -11,6 +11,7 @@ import {MockOfferApproval} from "./mock/MockOfferApproval.sol";
 
 import {CreateFetchSaleConditions} from "./utils/CreateFetchSaleConditions.sol";
 import {FetchOfferApproval} from "./utils/FetchOfferApproval.sol";
+import {CreateFetchDeposit} from "./utils/CreateFetchDeposit.sol";
 
 contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
@@ -82,49 +83,45 @@ contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT ASK
     //////////////////////////////////////////////////////////////*/
+    /**
+     * @dev Verifies values update after an offer has been approved and the deposit ask
+     *      triggered.
+     */
     function testDepositStateUpdateAfterDepositAskHasBeenTriggered() public {
         OfferApproval.Approval memory approval;
         approval = _createOfferApprovalWithCustomPrice();
-
-        // console.log(approval.conditions.paymentTerms.consummationSaleTimeframe);
-
         deposit.emitDepositAsk(nftAsset, approval);
 
         // fetch saved data
-        (
-            Deposit.DepositState memory savedState,
-            Deposit.ApprovalResume memory savedApproval,
-            ,
-
-        ) = deposit.depositedDataOf(nftAsset);
-
-        // Foundry doesn't support enum comparison, only integer comparison.
+        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+            deposit,
+            nftAsset
+        );
+        // DepositState
         assertEq(
-            uint256(savedState.status),
+            uint256(saved.state.status),
             uint256(Deposit.DepositStatus.Pending)
         );
-        assertFalse(savedState.isAssetLocked);
-        // Compare struct Approval field by field as Foundry doesn't support direct
-        // comparison.
-        assertEq(savedApproval.seller, approval.seller);
-        assertEq(savedApproval.buyer, approval.buyer);
-        assertEq(savedApproval.price, approval.price);
+        assertFalse(saved.state.isAssetLocked);
+        // SellerData
+        assertEq(saved.approval.seller, approval.seller);
+        assertEq(saved.approval.buyer, approval.buyer);
+        assertEq(saved.approval.price, approval.price);
     }
 
+    /// @dev Verifies emittance of DepositAsked event.
     function testEventEmittanceDepositAsked() public {
         OfferApproval.Approval
             memory approval = _createOfferApprovalWithCustomPrice();
-
         deposit.emitDepositAsk(nftAsset, approval);
-        (
-            Deposit.DepositState memory savedState,
-            Deposit.ApprovalResume memory savedApproval,
-            ,
 
-        ) = deposit.depositedDataOf(nftAsset);
+        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+            deposit,
+            nftAsset
+        );
 
         vm.expectEmit(true, true, true, true);
-        emit DepositAsked(nftAsset, savedApproval);
+        emit DepositAsked(nftAsset, saved.approval);
         deposit.emitDepositAsk(nftAsset, approval);
     }
 
@@ -133,7 +130,6 @@ contract DepositTest is Test {
     //////////////////////////////////////////////////////////////*/
     function testOnlyApprovedBuyerCanMakeDeposit() public {
         USDC.mint(randomWallet, 6450592 * 10**18);
-
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
             memory approval = _createOfferApprovalWithCustomPrice();
@@ -149,13 +145,17 @@ contract DepositTest is Test {
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
     }
 
+    /**
+     * @dev Buyer makes the full deposit in ERC20 and verifies balances & other values
+     *      update.
+     */
     function testBuyerDepositWholeAmountAgreedInOfferApprovalERC20OnlyAndVerifySavedValues()
         public
     {
         // Mints USDC to buyer
         uint256 usdcMintedToBuyer = 6450592 * 10**18;
         USDC.mint(buyer, usdcMintedToBuyer);
-        // Verify USDC balance of deposit contract == 0
+        // USDC balance of deposit contract == 0
         assertEq(USDC.balanceOf(address(deposit)), 0);
 
         // Simulate a deposit ask after an offer has been approved
@@ -163,71 +163,49 @@ contract DepositTest is Test {
             memory approval = _createOfferApprovalWithCustomPrice();
         deposit.emitDepositAsk(nftAsset, approval);
 
-        /*//////////////////////////////////////////////////////////////
-						        BUYER ACTIONS
-	    //////////////////////////////////////////////////////////////*/
+        //////////////// BUYER ACTIONS ////////////////
         vm.startPrank(buyer);
-
         // Seller approves the deposit
         USDC.approve(address(deposit), approval.price);
         // Seller deposits USDC
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
-
         vm.stopPrank();
 
-        /*//////////////////////////////////////////////////////////////
-						        RESULTS VERIFICATION
-	    //////////////////////////////////////////////////////////////*/
-        Deposit.BuyerData memory buyerData;
-        (, , buyerData, ) = deposit.depositedDataOf(nftAsset);
-
-        assertEq(buyerData.currencyAddress, address(USDC));
-        assertEq(buyerData.symbol, "USDC");
-        assertEq(buyerData.amount, approval.price);
-
-        // Verify USDC balance of deposit contract == assets.buyerData.amount
+        //////////////// RESULTS VERIFICATION ////////////////
+        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+            deposit,
+            nftAsset
+        );
+        // BuyerData
+        assertEq(saved.buyerData.currencyAddress, address(USDC));
+        assertEq(saved.buyerData.symbol, "USDC");
+        assertEq(saved.buyerData.amount, approval.price);
+        // USDC balance of deposit contract == assets.buyerData.amount
         assertEq(USDC.balanceOf(address(deposit)), approval.price);
-        // Verify USDC balance of buyer == initialiBuyerBalance - assets.buyerData.amount
+        // USDC balance of buyer == initialiBuyerBalance - assets.buyerData.amount
         assertEq(USDC.balanceOf(buyer), usdcMintedToBuyer - approval.price);
-
-        // Verify deposit state has been updated
-        (
-            Deposit.DepositState memory savedState,
-            Deposit.ApprovalResume memory savedApproval,
-            ,
-
-        ) = deposit.depositedDataOf(nftAsset);
+        // DepositState
         assertEq(
-            uint256(savedState.status),
+            uint256(saved.state.status),
             uint256(Deposit.DepositStatus.BuyerFullDeposit)
         );
-        assertTrue(savedState.isAssetLocked);
+        assertTrue(saved.state.isAssetLocked);
     }
 
+    /// @dev Verifies emittance of BuyerDeposit event.
     function testEventEmittanceBuyerDeposit() public {
         USDC.mint(buyer, 6450592 * 10**18);
-
         // Simulate a deposit ask after an offer has been approved
         OfferApproval.Approval
             memory approval = _createOfferApprovalWithCustomPrice();
         deposit.emitDepositAsk(nftAsset, approval);
 
+        Deposit.DepositData memory depositData = CreateFetchDeposit
+            .createDepositData(approval, address(USDC), "USDC", false, 0);
+
+        // Buyer makes the deposit
         vm.startPrank(buyer);
-
-        Deposit.DepositData memory depositData;
-
-        depositData.approval.seller = approval.seller;
-        depositData.approval.buyer = approval.buyer;
-        depositData.approval.price = approval.price;
-
-        depositData.buyerData.currencyAddress = address(USDC);
-        depositData.buyerData.symbol = "USDC";
-        depositData.buyerData.amount = approval.price;
-
-        depositData.state.status = Deposit.DepositStatus.BuyerFullDeposit;
-        depositData.state.isAssetLocked = true;
-
-        // Seller approves the deposit
+        // approve deposit contract
         USDC.approve(address(deposit), approval.price);
         vm.expectEmit(true, true, true, true);
         emit BuyerDeposit(nftAsset, depositData, block.timestamp);
@@ -237,7 +215,7 @@ contract DepositTest is Test {
     /*//////////////////////////////////////////////////////////////
                                  DEPOSIT FROM SELLER
     //////////////////////////////////////////////////////////////*/
-    // Seller can only deposit AssetNft after the buyer deposited ERC20
+    /// @dev Verifies seller can only deposit AssetNft after the buyer has deposited ERC20
     function tesBuyerDepositFirst() public {
         vm.startPrank(owner);
 
@@ -251,9 +229,7 @@ contract DepositTest is Test {
             memory approval = _createOfferApprovalWithCustomPrice();
         vm.prank(owner);
         deposit.emitDepositAsk(nftAsset, approval);
-        /*//////////////////////////////////////////////////////////////
-                            Let buyer deposit USDC
-        //////////////////////////////////////////////////////////////*/
+        //////////////// Let buyer deposit USDC ////////////////
         USDC.mint(buyer, 325249033 * 10**18);
         vm.startPrank(buyer);
         // Seller approves the deposit
@@ -262,9 +238,7 @@ contract DepositTest is Test {
         deposit.buyerWholeDepositERC20(nftAsset, address(USDC), "USDC");
         vm.stopPrank();
 
-        /*//////////////////////////////////////////////////////////////
-                            Let seller deposit AssetNft
-        //////////////////////////////////////////////////////////////*/
+        //////////////// Let seller deposit AssetNft ////////////////
         vm.startPrank(owner);
         nftAsset.approve(address(deposit), 0);
         deposit.sellerDepositAssetNft(nftAsset);
@@ -272,25 +246,22 @@ contract DepositTest is Test {
         assertEq(nftAsset.balanceOf(address(deposit)), 1);
 
         // Verify DepositData update
-        (, , , Deposit.SellerData memory sellerData) = deposit.depositedDataOf(
+        Deposit.DepositData memory saved = CreateFetchDeposit.depositedDataOf(
+            deposit,
             nftAsset
         );
-        assertTrue(sellerData.hasSellerDepositedAll);
-        assertEq(sellerData.amount, 1);
-
-        // Verify DepositState update
-        (Deposit.DepositState memory depositState, , , ) = deposit
-            .depositedDataOf(nftAsset);
+        // verifies seller data
+        assertTrue(saved.sellerData.hasSellerDepositedAll);
+        assertEq(saved.sellerData.amount, 1);
+        // Verify DepositState update;
         assertEq(
-            uint256(depositState.status),
+            uint256(saved.state.status),
             uint256(Deposit.DepositStatus.AllDepositMade)
         );
     }
 
     function testEventEmittanceSellerDeposit() public {
-        /*//////////////////////////////////////////////////////////////
-                            Deposit logic
-        //////////////////////////////////////////////////////////////*/
+        //////////////// Deposit logic ////////////////
         // Simulate deposit ask
         OfferApproval.Approval
             memory approval = _createOfferApprovalWithCustomPrice();
@@ -309,21 +280,9 @@ contract DepositTest is Test {
         vm.startPrank(owner);
         nftAsset.approve(address(deposit), 0);
         //////////////// Configuring structs ////////////////
-        Deposit.DepositData memory depositData;
+        Deposit.DepositData memory depositData = CreateFetchDeposit
+            .createDepositData(approval, address(USDC), "USDC", true, 1);
 
-        depositData.state.status = Deposit.DepositStatus.AllDepositMade;
-        depositData.state.isAssetLocked = true;
-
-        depositData.approval.seller = approval.seller;
-        depositData.approval.buyer = approval.buyer;
-        depositData.approval.price = approval.price;
-
-        depositData.buyerData.currencyAddress = address(USDC);
-        depositData.buyerData.symbol = "USDC";
-        depositData.buyerData.amount = approval.price;
-
-        depositData.sellerData.hasSellerDepositedAll = true;
-        depositData.sellerData.amount = 1;
         //////////////// Check event emittance ////////////////
         vm.expectEmit(true, true, true, true);
         emit SellerDeposit(nftAsset, depositData, block.timestamp);
