@@ -114,6 +114,7 @@ contract DepositTest is Test {
         nftAsset.safeMint(
             owner,
             0,
+            1,
             "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
         );
 
@@ -126,7 +127,7 @@ contract DepositTest is Test {
         USDC.approve(address(deposit), 2**256 - 1); // unlimited allowance
         // AssetNft from owner
         vm.prank(owner);
-        nftAsset.approve(address(deposit), 0); // unlimited allowance
+        nftAsset.setApprovalForAll(address(deposit), true); // unlimited allowance
     }
 
     /*//////////////////////////////////////////////////////////////
@@ -264,7 +265,7 @@ contract DepositTest is Test {
             );
 
         // Deposit contract should have all AssetNft
-        assertEq(nftAsset.balanceOf(address(deposit)), 1);
+        assertEq(nftAsset.balanceOf(address(deposit), 0), 1);
 
         // Verify DepositData update
         Deposit.DepositData memory saved = DepositCreateFetch.depositedDataOf(
@@ -317,9 +318,9 @@ contract DepositTest is Test {
 
         ////////// Verify values //////////
         // Deposit contract doesn't have any AssetNft anymore
-        assertEq(nftAsset.balanceOf(address(deposit)), 0);
+        assertEq(nftAsset.balanceOf(address(deposit), 0), 0);
         // buyer received AssetNft
-        assertEq(nftAsset.balanceOf(buyer), 1);
+        assertEq(nftAsset.balanceOf(buyer, 0), 1);
         // Deposit contract doesn't have any USDC anymore
         assertEq(USDC.balanceOf(address(deposit)), 0);
         // Seller received the deposited USDC for the price agreeed

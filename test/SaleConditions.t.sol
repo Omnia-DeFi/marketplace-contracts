@@ -37,6 +37,7 @@ contract MockSaleConditionsTest is Test {
         asset.safeMint(
             owner,
             0,
+            1,
             "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
         );
     }

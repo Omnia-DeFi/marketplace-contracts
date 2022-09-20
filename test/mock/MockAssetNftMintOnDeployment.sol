@@ -5,6 +5,6 @@ import {AssetNft} from "omnia-nft/AssetNft.sol";
 
 contract MockAssetNft is AssetNft {
     constructor(address owner) AssetNft("AssetMocked", "MA1", owner) {
-        safeMint(owner, 0, "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV");
+        safeMint(owner, 0, 1, "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV");
     }
 }
