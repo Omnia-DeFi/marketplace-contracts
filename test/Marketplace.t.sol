@@ -61,6 +61,7 @@ contract MarketplaceTest is Test {
         assetNft.safeMint(
             owner,
             0,
+            1,
             "QmRa4ZuTB2FTqRUqdh1K9rwjx33E5LHKXwC3n6udGvpaPV"
         );
 
@@ -123,7 +124,7 @@ contract MarketplaceTest is Test {
 
     function _sellerApproveMarketplaceAsSpenderAndDepositAssetNft() internal {
         vm.startPrank(owner);
-        assetNft.approve(address(marketplace), 0);
+        assetNft.setApprovalForAll(address(marketplace), true);
         marketplace.sellerDepositAssetNft(assetNft);
         vm.stopPrank(); // stop pranking owner
     }
@@ -368,7 +369,7 @@ contract MarketplaceTest is Test {
         _buyerApproveMarketplaceAsSpenderAndDepositERC20();
 
         vm.startPrank(owner);
-        assetNft.approve(address(marketplace), 0);
+        assetNft.setApprovalForAll(address(marketplace), true);
         marketplace.sellerDepositAndConsummateSale(assetNft);
 
         assertEq(

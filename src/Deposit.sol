@@ -151,7 +151,14 @@ abstract contract Deposit is ERC721TokenReceiver {
         internal
         buyerDepositFirst(asset)
     {
-        asset.safeTransferFrom(msg.sender, address(this), 0);
+        // TODO: only transfer id 0
+        asset.safeTransferFrom(
+            msg.sender,
+            address(this),
+            0,
+            asset.balanceOf(msg.sender, 0),
+            bytes("")
+        );
 
         depositedDataOf[asset].sellerData.hasSellerDepositedAll = true;
         depositedDataOf[asset].sellerData.amount = 1;
@@ -170,10 +177,13 @@ abstract contract Deposit is ERC721TokenReceiver {
      */
     function _swapAssets(AssetNft asset) internal onAllDepositMade(asset) {
         // transfer AssetNft from this contract to the buyer
+        // TODO: only transfer id 0
         asset.safeTransferFrom(
             address(this),
             depositedDataOf[asset].approval.buyer,
-            0
+            0,
+            asset.balanceOf(address(this), 0),
+            bytes("")
         );
 
         // transfer ERC20 from this contract to the seller
