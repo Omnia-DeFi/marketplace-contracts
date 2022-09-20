@@ -6,7 +6,7 @@ import {SaleConditions} from "./SaleConditions.sol";
 import {OfferApproval} from "./OfferApproval.sol";
 import {OwnableAsset} from "./OwnableAsset.sol";
 import {IERC20} from "openzeppelin-contracts/token/ERC20/IERC20.sol";
-import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
+import {ERC1155TokenReceiver} from "solmate/tokens/ERC1155.sol";
 
 /**
  * @notice Once, the asset offer has been approved by the seller it
@@ -15,7 +15,7 @@ import {ERC721TokenReceiver} from "solmate/tokens/ERC721.sol";
  *
  *         The buyer has to deposit the whole amount of the asset offer.
  */
-abstract contract Deposit is ERC721TokenReceiver {
+abstract contract Deposit is ERC1155TokenReceiver {
     event DepositAsked(AssetNft indexed asset, ApprovalResume indexed approval);
     event BuyerDeposit(
         AssetNft indexed asset,
