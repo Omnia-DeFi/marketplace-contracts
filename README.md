@@ -1,3 +1,17 @@
+## Milestones
+
+### [COMPLETED] M1
+
+Asset tokenisation conception. Linking (mocked) KYA data to an NFT.
+
+### [COMPLETED] M2
+
+First part of ownership transfer → need payment before transfer & multiple currencies supported + FIAT.
+
+### [IN REVIEW] M3
+
+New NFT owner must KYC’ed before transfer happens
+
 # <h1 align="center"> Foundryx Hardhat Template </h1>
 
 Merging 2 repos: [foundry-rs/hardhat-foundry-template](https://github.com/foundry-rs/hardhat-foundry-template) + [abigger87/femplate](https://github.com/abigger87/femplate)
